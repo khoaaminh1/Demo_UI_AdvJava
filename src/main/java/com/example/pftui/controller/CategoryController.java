@@ -19,6 +19,18 @@ public class CategoryController {
     public String list(Model model) {
         model.addAttribute("active", "categories");
         model.addAttribute("categories", data.getCategories());
+        
+        // Calculate statistics
+        long expenseCount = data.getCategories().stream()
+            .filter(c -> c.getType() == CategoryType.EXPENSE)
+            .count();
+        long incomeCount = data.getCategories().stream()
+            .filter(c -> c.getType() == CategoryType.INCOME)
+            .count();
+        
+        model.addAttribute("expenseCount", expenseCount);
+        model.addAttribute("incomeCount", incomeCount);
+        
         return "categories";
     }
 

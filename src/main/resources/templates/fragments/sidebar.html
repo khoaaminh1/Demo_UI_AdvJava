@@ -1,29 +1,35 @@
 <div xmlns:th="http://www.thymeleaf.org" th:fragment="sidebar(active)">
-    <aside class="sidebar">
-      <div class="brand">
-        <i class="ri-pie-chart-2-line"></i>
-        <span>PFT</span>
-      </div>
-      <nav class="menu">
-        <a th:href="@{/dashboard}" th:classappend="${active}=='dashboard' ? 'active'">
-          <i class="ri-dashboard-2-line"></i> Dashboard
-        </a>
-        <a th:href="@{/transactions}" th:classappend="${active}=='transactions' ? 'active'">
-          <i class="ri-exchange-dollar-line"></i> Transactions
-        </a>
-        <a th:href="@{/budgets}" th:classappend="${active}=='budgets' ? 'active'">
-          <i class="ri-wallet-3-line"></i> Budgets
-        </a>
-        <a th:href="@{/categories}" th:classappend="${active}=='categories' ? 'active'">
-          <i class="ri-price-tag-3-line"></i> Categories
-        </a>
-        <a th:href="@{/accounts}" th:classappend="${active}=='accounts' ? 'active'">
-          <i class="ri-bank-card-line"></i> Accounts
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <a href="#"><i class="ri-settings-3-line"></i> Settings</a>
-      </div>
-    </aside>
-  </div>
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ri-pie-chart-2-line"></i>
+      <span>Personal Finance</span>
+    </div>
+    <nav class="menu">
+      <a th:href="@{/dashboard}" th:classappend="${active}=='dashboard' ? 'active' : ''">
+        <i class="ri-dashboard-2-line"></i>
+        <span>Dashboard</span>
+      </a>
+      <a th:href="@{/transactions}" th:classappend="${active}=='transactions' ? 'active' : ''">
+        <i class="ri-exchange-dollar-line"></i>
+        <span>Transactions</span>
+      </a>
+      <a th:href="@{/budgets}" th:classappend="${active}=='budgets' ? 'active' : ''">
+        <i class="ri-wallet-3-line"></i>
+        <span>Budgets</span>
+      </a>
+      <a th:href="@{/categories}" th:classappend="${active}=='categories' ? 'active' : ''">
+        <i class="ri-price-tag-3-line"></i>
+        <span>Categories</span>
+      </a>
+      <a th:href="@{/accounts}" th:classappend="${active}=='accounts' ? 'active' : ''">
+        <i class="ri-bank-card-line"></i>
+        <span>Accounts</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="#"><i class="ri-settings-3-line"></i> <span>Settings</span></a>
+      <a href="#"><i class="ri-logout-box-line"></i> <span>Logout</span></a>
+    </div>
+  </aside>
+</div>
   

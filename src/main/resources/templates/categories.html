@@ -3,41 +3,135 @@
 <head th:replace="fragments/head :: head('Categories')"></head>
 <body>
 <div class="app">
-  <aside th:replace="fragments/sidebar :: sidebar(${active})"></aside>
+  <aside th:replace="fragments/sidebar :: sidebar('categories')"></aside>
   <main class="content">
     <div class="topbar">
-      <div class="title">Categories</div>
-      <a class="btn secondary" th:href="@{/dashboard}"><i class="ri-arrow-left-line"></i> Back</a>
+      <div class="title">
+        <i class="ri-price-tag-3-fill" style="color: var(--primary);"></i>
+        Categories
+      </div>
+      <a class="btn secondary" th:href="@{/dashboard}">
+        <i class="ri-arrow-left-line"></i> Back to Dashboard
+      </a>
     </div>
 
     <div class="grid cols-2">
+      <!-- Add Category Form -->
       <div class="card">
-        <div class="card-title">Add Category</div>
+        <div class="card-title">
+          <i class="ri-add-circle-line"></i>
+          Add New Category
+        </div>
         <form class="form" th:action="@{/categories}" method="post">
-          <div class="form-row">
-            <input name="name" placeholder="Name" required/>
-            <select name="type">
-              <option value="EXPENSE">Expense</option>
-              <option value="INCOME">Income</option>
-            </select>
-            <input name="icon" placeholder="Icon class (e.g. ri-restaurant-2-line)"/>
+          <div class="form-group">
+            <label for="categoryName">Category Name *</label>
+            <input id="categoryName" name="name" placeholder="e.g., Food & Dining, Salary" required/>
           </div>
-          <button class="btn" type="submit"><i class="ri-add-line"></i> Add</button>
+          
+          <div class="form-group">
+            <label for="categoryType">Type *</label>
+            <select id="categoryType" name="type" required>
+              <option value="EXPENSE">📤 Expense</option>
+              <option value="INCOME">📥 Income</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="icon">Icon Class (Optional)</label>
+            <input id="icon" name="icon" placeholder="e.g., ri-restaurant-2-line"/>
+            <small class="sub" style="margin-top: 4px; display: block;">
+              Find icons at <a href="https://remixicon.com" target="_blank" style="color: var(--primary);">RemixIcon.com</a>
+            </small>
+          </div>
+          
+          <div class="mt-2">
+            <button class="btn" type="submit">
+              <i class="ri-save-line"></i> Add Category
+            </button>
+          </div>
         </form>
       </div>
 
+      <!-- Categories List -->
       <div class="card">
-        <div class="card-title">All Categories</div>
-        <table class="table">
-          <thead><tr><th>Name</th><th>Type</th><th>Icon</th></tr></thead>
-          <tbody>
-            <tr th:each="c: ${categories}">
-              <td th:text="${c.name}">Food</td>
-              <td th:text="${c.type}">EXPENSE</td>
-              <td><span class="badge"><i th:class="${c.icon}"></i> <span th:text="${c.icon}"></span></span></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="card-title">
+          <i class="ri-list-check"></i>
+          All Categories
+        </div>
+        
+        <div th:if="${categories != null and !categories.isEmpty()}">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Icon</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="c: ${categories}">
+                <td>
+                  <span class="fw-semibold" th:text="${c.name}">Food</span>
+                </td>
+                <td>
+                  <span class="badge" 
+                        th:style="${c.type.name() == 'EXPENSE'} ? 'background: var(--danger-light); color: var(--danger);' : 'background: var(--success-light); color: var(--success);'"
+                        th:text="${c.type}">EXPENSE</span>
+                </td>
+                <td>
+                  <span class="badge">
+                    <i th:class="${c.icon != null and c.icon != ''} ? ${c.icon} : 'ri-price-tag-3-line'"></i>
+                    <span th:text="${c.icon != null and c.icon != ''} ? ${c.icon} : 'default'">Icon</span>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div th:if="${categories == null or categories.isEmpty()}" 
+             class="text-center" style="padding: 3rem;">
+          <i class="ri-price-tag-3-line" style="font-size: 4rem; color: var(--text-muted);"></i>
+          <p class="text-muted mt-1">No categories yet</p>
+          <p class="text-muted">Add your first category using the form</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Statistics -->
+    <div class="grid cols-2 mt-3">
+      <div class="card">
+        <div class="card-title">
+          <i class="ri-pie-chart-2-line"></i>
+          Category Statistics
+        </div>
+        <div class="stats-row">
+          <span class="stats-label">Total Categories:</span>
+          <span class="stats-value" th:text="${categories != null ? categories.size() : 0}">0</span>
+        </div>
+        <div class="stats-row">
+          <span class="stats-label">Expense Categories:</span>
+          <span class="stats-value text-danger" th:text="${expenseCount}">0</span>
+        </div>
+        <div class="stats-row">
+          <span class="stats-label">Income Categories:</span>
+          <span class="stats-value text-success" th:text="${incomeCount}">0</span>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">
+          <i class="ri-lightbulb-line"></i>
+          Tips & Best Practices
+        </div>
+        <div class="footer-note" style="margin: 0;">
+          <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+            <li>Create specific categories for better tracking</li>
+            <li>Keep category names short and descriptive</li>
+            <li>Use icons to make categories easily recognizable</li>
+            <li>Review and update categories periodically</li>
+          </ul>
+        </div>
       </div>
     </div>
 

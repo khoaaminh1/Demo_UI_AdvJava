@@ -3,71 +3,136 @@
 <head th:replace="fragments/head :: head('Dashboard')"></head>
 <body>
 <div class="app">
-  <aside th:replace="fragments/sidebar :: sidebar(${active})"></aside>
+  <aside th:replace="fragments/sidebar :: sidebar('dashboard')"></aside>
   <main class="content">
     <div class="topbar">
-      <div class="title">Dashboard</div>
-      <input class="search" placeholder="Search..."/>
+      <div class="title">
+        <i class="ri-dashboard-2-fill" style="color: var(--primary);"></i>
+        Dashboard
+      </div>
+      <input class="search" placeholder="Search transactions, categories..."/>
     </div>
 
+    <!-- KPI Cards -->
     <div class="grid cols-3">
       <div class="card">
-        <div class="card-title">Income (MTD)</div>
-        <div class="kpi positive" th:text="${#numbers.formatDecimal(vm.mtdIncome,1,'COMMA',2,'POINT')}">$0.00</div>
+        <div class="card-title">
+          <i class="ri-arrow-down-circle-line" style="color: var(--success);"></i>
+          Total Income
+        </div>
+        <div class="kpi positive" th:text="'$' + ${#numbers.formatDecimal(vm.mtdIncome,1,'COMMA',2,'POINT')}">$0.00</div>
         <div class="sub">Month to date</div>
       </div>
       <div class="card">
-        <div class="card-title">Expense (MTD)</div>
-        <div class="kpi negative" th:text="${#numbers.formatDecimal(vm.mtdExpense,1,'COMMA',2,'POINT')}">$0.00</div>
+        <div class="card-title">
+          <i class="ri-arrow-up-circle-line" style="color: var(--danger);"></i>
+          Total Expense
+        </div>
+        <div class="kpi negative" th:text="'$' + ${#numbers.formatDecimal(vm.mtdExpense,1,'COMMA',2,'POINT')}">$0.00</div>
         <div class="sub">Month to date</div>
       </div>
       <div class="card">
-        <div class="card-title">Net</div>
-        <div class="kpi" th:text="${#numbers.formatDecimal(vm.net,1,'COMMA',2,'POINT')}">$0.00</div>
+        <div class="card-title">
+          <i class="ri-wallet-3-line" style="color: var(--info);"></i>
+          Net Balance
+        </div>
+        <div class="kpi" th:text="'$' + ${#numbers.formatDecimal(vm.net,1,'COMMA',2,'POINT')}" 
+             th:classappend="${vm.net >= 0} ? 'positive' : 'negative'">$0.00</div>
         <div class="sub">Income - Expense</div>
       </div>
     </div>
 
-    <div class="grid cols-2" style="margin-top:16px">
+    <!-- Charts Section -->
+    <div class="grid cols-2 mt-3">
       <div class="card">
-        <div class="card-title">Spend by Category</div>
-        <canvas id="catChart" height="220"></canvas>
+        <div class="card-title">
+          <i class="ri-pie-chart-2-line"></i>
+          Spending by Category
+        </div>
+        <canvas id="catChart" height="240"></canvas>
       </div>
       <div class="card">
-        <div class="card-title">Cash Flow (Last 6 months)</div>
-        <canvas id="flowChart" height="220"></canvas>
+        <div class="card-title">
+          <i class="ri-line-chart-line"></i>
+          Cash Flow Trend (Last 6 Months)
+        </div>
+        <canvas id="flowChart" height="240"></canvas>
       </div>
     </div>
 
-    <div class="grid cols-2" style="margin-top:16px">
+    <!-- Data Tables Section -->
+    <div class="grid cols-2 mt-3">
       <div class="card">
-        <div class="card-title">Recent Transactions</div>
+        <div class="card-title">
+          <i class="ri-time-line"></i>
+          Recent Transactions
+        </div>
         <table class="table">
           <thead>
-            <tr><th>Date</th><th>Merchant</th><th>Category</th><th>Account</th><th class="right">Amount</th></tr>
+            <tr>
+              <th>Date</th>
+              <th>Merchant</th>
+              <th>Category</th>
+              <th>Account</th>
+              <th class="right">Amount</th>
+            </tr>
           </thead>
           <tbody>
             <tr th:each="t : ${vm.recentTransactions}">
-              <td th:text="${t.date}"></td>
+              <td th:text="${t.date}">2024-10-01</td>
               <td th:text="${t.merchant}">Merchant</td>
-              <td><span class="badge"><i class="ri-price-tag-3-line"></i><span th:text="${t.category != null ? t.category.name : 'Uncategorized'}"></span></span></td>
+              <td>
+                <span class="badge">
+                  <i class="ri-price-tag-3-line"></i>
+                  <span th:text="${t.category != null ? t.category.name : 'Uncategorized'}">Food</span>
+                </span>
+              </td>
               <td th:text="${t.account.name}">Account</td>
-              <td class="amount" th:classappend="${t.category.type.name()=='EXPENSE'}? ' expense' : ' income'"
-                  th:text="${#numbers.formatDecimal(t.amount,1,'COMMA',2,'POINT')}">$0.00</td>
+              <td class="amount" 
+                  th:classappend="${t.category.type.name()=='EXPENSE'} ? 'expense' : 'income'"
+                  th:text="'$' + ${#numbers.formatDecimal(t.amount,1,'COMMA',2,'POINT')}">$0.00</td>
             </tr>
           </tbody>
         </table>
-      </div>
-      <div class="card">
-        <div class="card-title">Budgets (This Month)</div>
-        <div th:each="u: ${vm.budgetUsages}" style="margin-bottom:12px">
-          <div style="display:flex; justify-content:space-between; margin-bottom:6px">
-            <div th:text="${u.categoryName}">Category</div>
-            <div class="sub" th:text="${#numbers.formatDecimal(u.spent,1,'COMMA',2,'POINT')} + ' / ' + ${#numbers.formatDecimal(u.limit,1,'COMMA',2,'POINT')}"></div>
-          </div>
-          <div class="progress"><div class="bar" th:style="'width:' + ${u.percent} + '%'"></div></div>
+        <div class="text-center mt-2">
+          <a th:href="@{/transactions}" class="btn secondary">
+            <i class="ri-list-check"></i> View All Transactions
+          </a>
         </div>
-        <div class="footer-note">Tip: set budgets per category in the Budgets page.</div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">
+          <i class="ri-funds-line"></i>
+          Budget Overview (This Month)
+        </div>
+        <div th:if="${vm.budgetUsages != null and !vm.budgetUsages.isEmpty()}">
+          <div th:each="u: ${vm.budgetUsages}" style="margin-bottom:16px">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px">
+              <div class="fw-semibold" th:text="${u.categoryName}">Category</div>
+              <div class="sub" th:text="'$' + ${#numbers.formatDecimal(u.spent,1,'COMMA',2,'POINT')} + ' / $' + ${#numbers.formatDecimal(u.limit,1,'COMMA',2,'POINT')}">
+                $0 / $0
+              </div>
+            </div>
+            <div class="progress">
+              <div class="bar" 
+                   th:style="'width:' + ${u.percent > 100 ? 100 : u.percent} + '%'"
+                   th:classappend="${u.percent >= 90} ? 'danger' : (${u.percent >= 75} ? 'warning' : '')"></div>
+            </div>
+            <div class="sub mt-1" th:if="${u.percent >= 90}" style="color: var(--danger);">
+              <i class="ri-alert-line"></i> Budget limit approaching!
+            </div>
+          </div>
+        </div>
+        <div th:if="${vm.budgetUsages == null or vm.budgetUsages.isEmpty()}" 
+             class="text-center" style="padding: 2rem;">
+          <i class="ri-wallet-3-line" style="font-size: 3rem; color: var(--text-muted);"></i>
+          <p class="text-muted mt-1">No budgets set yet</p>
+        </div>
+        <div class="footer-note">
+          <i class="ri-lightbulb-line"></i>
+          Tip: Set budgets per category in the <a th:href="@{/budgets}" style="color: var(--primary); text-decoration: none; font-weight: 600;">Budgets page</a>.
+        </div>
       </div>
     </div>
 

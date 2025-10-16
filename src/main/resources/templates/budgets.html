@@ -3,56 +3,163 @@
 <head th:replace="fragments/head :: head('Budgets')"></head>
 <body>
 <div class="app">
-  <aside th:replace="fragments/sidebar :: sidebar(${active})"></aside>
+  <aside th:replace="fragments/sidebar :: sidebar('budgets')"></aside>
   <main class="content">
     <div class="topbar">
-      <div class="title">Budgets</div>
-      <div class="sub">Month: <span th:text="${ym}"></span></div>
+      <div class="title">
+        <i class="ri-wallet-3-fill" style="color: var(--primary);"></i>
+        Budgets
+      </div>
+      <div class="sub" style="font-size: 1rem; color: var(--text-secondary);">
+        <i class="ri-calendar-line"></i> 
+        Current Month: <span class="fw-semibold" th:text="${ym}">2024-10</span>
+      </div>
     </div>
 
     <div class="grid cols-2">
+      <!-- Set Budget Form -->
       <div class="card">
-        <div class="card-title">Set Budget</div>
+        <div class="card-title">
+          <i class="ri-add-circle-line"></i>
+          Set Budget
+        </div>
         <form class="form" th:action="@{/budgets}" method="post">
-          <div class="form-row">
-            <select name="categoryId" required>
+          <div class="form-group">
+            <label for="categoryId">Category *</label>
+            <select id="categoryId" name="categoryId" required>
+              <option value="">Select a category</option>
               <option th:each="c: ${categories}" th:value="${c.id}" th:text="${c.name}">Food</option>
             </select>
-            <input type="number" step="0.01" name="limit" placeholder="Limit amount" required/>
-            <input type="number" name="month" min="1" max="12" th:value="${ym.monthValue}" required/>
-            <input type="number" name="year" th:value="${ym.year}" required/>
           </div>
-          <div>
-            <button class="btn" type="submit"><i class="ri-save-line"></i> Save</button>
+          
+          <div class="form-group">
+            <label for="limit">Budget Limit *</label>
+            <input id="limit" type="number" step="0.01" name="limit" placeholder="e.g., 500.00" required/>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="month">Month *</label>
+              <select id="month" name="month" th:value="${ym.monthValue}" required>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10" selected>October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="year">Year *</label>
+              <input id="year" type="number" name="year" th:value="${ym.year}" placeholder="2024" required/>
+            </div>
+          </div>
+          
+          <div class="mt-2">
+            <button class="btn" type="submit">
+              <i class="ri-save-line"></i> Save Budget
+            </button>
           </div>
         </form>
       </div>
 
+      <!-- Budget Usages -->
       <div class="card">
-        <div class="card-title">Usages (This Month)</div>
-        <div th:each="u: ${usages}" style="margin-bottom:12px">
-          <div style="display:flex; justify-content:space-between; margin-bottom:6px">
-            <div th:text="${u.categoryName}">Category</div>
-            <div class="sub" th:text="${#numbers.formatDecimal(u.spent,1,'COMMA',2,'POINT')} + ' / ' + ${#numbers.formatDecimal(u.limit,1,'COMMA',2,'POINT')}"></div>
+        <div class="card-title">
+          <i class="ri-funds-line"></i>
+          Budget Usage (This Month)
+        </div>
+        
+        <div th:if="${usages != null and !usages.isEmpty()}">
+          <div th:each="u: ${usages}" style="margin-bottom:20px">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px">
+              <div class="fw-semibold" th:text="${u.categoryName}">Category</div>
+              <div class="sub">
+                <span class="fw-semibold" th:text="'$' + ${#numbers.formatDecimal(u.spent,1,'COMMA',2,'POINT')}">$0</span>
+                / 
+                <span th:text="'$' + ${#numbers.formatDecimal(u.limit,1,'COMMA',2,'POINT')}">$0</span>
+              </div>
+            </div>
+            <div class="progress">
+              <div class="bar" 
+                   th:style="'width:' + ${u.percent > 100 ? 100 : u.percent} + '%'"
+                   th:classappend="${u.percent >= 90} ? 'danger' : (${u.percent >= 75} ? 'warning' : '')"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:4px">
+              <span class="sub" th:text="${u.percent} + '% used'">0% used</span>
+              <span class="sub" 
+                    th:if="${u.percent >= 90}" 
+                    style="color: var(--danger); font-weight: 600;">
+                <i class="ri-alert-line"></i> Limit approaching!
+              </span>
+              <span class="sub" 
+                    th:if="${u.percent >= 75 and u.percent < 90}" 
+                    style="color: var(--warning); font-weight: 600;">
+                <i class="ri-error-warning-line"></i> Monitor spending
+              </span>
+            </div>
           </div>
-          <div class="progress"><div class="bar" th:style="'width:' + ${u.percent} + '%'"></div></div>
+        </div>
+        
+        <div th:if="${usages == null or usages.isEmpty()}" 
+             class="text-center" style="padding: 2rem;">
+          <i class="ri-wallet-3-line" style="font-size: 3rem; color: var(--text-muted);"></i>
+          <p class="text-muted mt-1">No budget data for this month</p>
         </div>
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px">
-      <div class="card-title">All Budgets</div>
-      <table class="table">
-        <thead><tr><th>Category</th><th>Month</th><th>Year</th><th>Limit</th></tr></thead>
-        <tbody>
-          <tr th:each="b: ${budgets}">
-            <td th:text="${b.category.name}">Food</td>
-            <td th:text="${b.month}">10</td>
-            <td th:text="${b.year}">2024</td>
-            <td th:text="${#numbers.formatDecimal(b.limitAmount,1,'COMMA',2,'POINT')}">$0.00</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- All Budgets Table -->
+    <div class="card mt-3">
+      <div class="card-title">
+        <i class="ri-list-check"></i>
+        All Budgets
+      </div>
+      
+      <div th:if="${budgets != null and !budgets.isEmpty()}">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Month</th>
+              <th>Year</th>
+              <th class="right">Limit Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="b: ${budgets}">
+              <td>
+                <span class="badge">
+                  <i class="ri-price-tag-3-line"></i>
+                  <span th:text="${b.category.name}">Food</span>
+                </span>
+              </td>
+              <td th:text="${b.month}">10</td>
+              <td th:text="${b.year}">2024</td>
+              <td class="amount fw-semibold" th:text="'$' + ${#numbers.formatDecimal(b.limitAmount,1,'COMMA',2,'POINT')}">$0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div th:if="${budgets == null or budgets.isEmpty()}" 
+           class="text-center" style="padding: 3rem;">
+        <i class="ri-wallet-3-line" style="font-size: 4rem; color: var(--text-muted);"></i>
+        <p class="text-muted mt-1">No budgets set yet</p>
+        <p class="text-muted">Start by setting your first budget above</p>
+      </div>
+      
+      <div class="footer-note mt-2">
+        <i class="ri-lightbulb-line"></i>
+        Tip: Set realistic budgets for each category to help control your spending and achieve your financial goals.
+      </div>
     </div>
 
   </main>
