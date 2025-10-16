@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Dashboard')"></head>
+<body>
+<div class="app">
+  <aside th:replace="fragments/sidebar :: sidebar(${active})"></aside>
+  <main class="content">
+    <div class="topbar">
+      <div class="title">Dashboard</div>
+      <input class="search" placeholder="Search..."/>
+    </div>
+
+    <div class="grid cols-3">
+      <div class="card">
+        <div class="card-title">Income (MTD)</div>
+        <div class="kpi positive" th:text="${#numbers.formatDecimal(vm.mtdIncome,1,'COMMA',2,'POINT')}">$0.00</div>
+        <div class="sub">Month to date</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Expense (MTD)</div>
+        <div class="kpi negative" th:text="${#numbers.formatDecimal(vm.mtdExpense,1,'COMMA',2,'POINT')}">$0.00</div>
+        <div class="sub">Month to date</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Net</div>
+        <div class="kpi" th:text="${#numbers.formatDecimal(vm.net,1,'COMMA',2,'POINT')}">$0.00</div>
+        <div class="sub">Income - Expense</div>
+      </div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card">
+        <div class="card-title">Spend by Category</div>
+        <canvas id="catChart" height="220"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title">Cash Flow (Last 6 months)</div>
+        <canvas id="flowChart" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card">
+        <div class="card-title">Recent Transactions</div>
+        <table class="table">
+          <thead>
+            <tr><th>Date</th><th>Merchant</th><th>Category</th><th>Account</th><th class="right">Amount</th></tr>
+          </thead>
+          <tbody>
+            <tr th:each="t : ${vm.recentTransactions}">
+              <td th:text="${t.date}"></td>
+              <td th:text="${t.merchant}">Merchant</td>
+              <td><span class="badge"><i class="ri-price-tag-3-line"></i><span th:text="${t.category != null ? t.category.name : 'Uncategorized'}"></span></span></td>
+              <td th:text="${t.account.name}">Account</td>
+              <td class="amount" th:classappend="${t.category.type.name()=='EXPENSE'}? ' expense' : ' income'"
+                  th:text="${#numbers.formatDecimal(t.amount,1,'COMMA',2,'POINT')}">$0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Budgets (This Month)</div>
+        <div th:each="u: ${vm.budgetUsages}" style="margin-bottom:12px">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+            <div th:text="${u.categoryName}">Category</div>
+            <div class="sub" th:text="${#numbers.formatDecimal(u.spent,1,'COMMA',2,'POINT')} + ' / ' + ${#numbers.formatDecimal(u.limit,1,'COMMA',2,'POINT')}"></div>
+          </div>
+          <div class="progress"><div class="bar" th:style="'width:' + ${u.percent} + '%'"></div></div>
+        </div>
+        <div class="footer-note">Tip: set budgets per category in the Budgets page.</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script th:inline="javascript">
+  const catLabels = [[${vm.categoryLabels}]];
+  const catValues = [[${vm.categoryValues}]];
+  const months = [[${vm.months}]];
+  const incomes = [[${vm.incomes}]];
+  const expenses = [[${vm.expenses}]];
+  renderDoughnut('catChart', catLabels, catValues);
+  renderLine('flowChart', months, incomes, expenses);
+</script>
+<div th:replace="fragments/scripts :: scripts"></div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Login')"></head>
+<body>
+<div class="app">
+  <aside th:replace="fragments/sidebar :: sidebar('')"></aside>
+  <main class="content">
+    <div class="topbar"><div class="title">Login (UI only)</div></div>
+    <div class="card" style="max-width:500px">
+      <div class="card-title">Welcome back</div>
+      <form class="form">
+        <input placeholder="Email"/>
+        <input placeholder="Password" type="password"/>
+        <button class="btn" type="button">Login</button>
+      </form>
+      <div class="footer-note">Auth is mock for UI demo. Integrate Spring Security later.</div>
+    </div>
+  </main>
+</div>
+<div th:replace="fragments/scripts :: scripts"></div>
+</body>
+</html>

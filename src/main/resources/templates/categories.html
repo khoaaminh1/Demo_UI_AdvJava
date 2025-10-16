@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Categories')"></head>
+<body>
+<div class="app">
+  <aside th:replace="fragments/sidebar :: sidebar(${active})"></aside>
+  <main class="content">
+    <div class="topbar">
+      <div class="title">Categories</div>
+      <a class="btn secondary" th:href="@{/dashboard}"><i class="ri-arrow-left-line"></i> Back</a>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="card-title">Add Category</div>
+        <form class="form" th:action="@{/categories}" method="post">
+          <div class="form-row">
+            <input name="name" placeholder="Name" required/>
+            <select name="type">
+              <option value="EXPENSE">Expense</option>
+              <option value="INCOME">Income</option>
+            </select>
+            <input name="icon" placeholder="Icon class (e.g. ri-restaurant-2-line)"/>
+          </div>
+          <button class="btn" type="submit"><i class="ri-add-line"></i> Add</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-title">All Categories</div>
+        <table class="table">
+          <thead><tr><th>Name</th><th>Type</th><th>Icon</th></tr></thead>
+          <tbody>
+            <tr th:each="c: ${categories}">
+              <td th:text="${c.name}">Food</td>
+              <td th:text="${c.type}">EXPENSE</td>
+              <td><span class="badge"><i th:class="${c.icon}"></i> <span th:text="${c.icon}"></span></span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+<div th:replace="fragments/scripts :: scripts"></div>
+</body>
+</html>

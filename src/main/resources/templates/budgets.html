@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Budgets')"></head>
+<body>
+<div class="app">
+  <aside th:replace="fragments/sidebar :: sidebar(${active})"></aside>
+  <main class="content">
+    <div class="topbar">
+      <div class="title">Budgets</div>
+      <div class="sub">Month: <span th:text="${ym}"></span></div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="card-title">Set Budget</div>
+        <form class="form" th:action="@{/budgets}" method="post">
+          <div class="form-row">
+            <select name="categoryId" required>
+              <option th:each="c: ${categories}" th:value="${c.id}" th:text="${c.name}">Food</option>
+            </select>
+            <input type="number" step="0.01" name="limit" placeholder="Limit amount" required/>
+            <input type="number" name="month" min="1" max="12" th:value="${ym.monthValue}" required/>
+            <input type="number" name="year" th:value="${ym.year}" required/>
+          </div>
+          <div>
+            <button class="btn" type="submit"><i class="ri-save-line"></i> Save</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Usages (This Month)</div>
+        <div th:each="u: ${usages}" style="margin-bottom:12px">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+            <div th:text="${u.categoryName}">Category</div>
+            <div class="sub" th:text="${#numbers.formatDecimal(u.spent,1,'COMMA',2,'POINT')} + ' / ' + ${#numbers.formatDecimal(u.limit,1,'COMMA',2,'POINT')}"></div>
+          </div>
+          <div class="progress"><div class="bar" th:style="'width:' + ${u.percent} + '%'"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">All Budgets</div>
+      <table class="table">
+        <thead><tr><th>Category</th><th>Month</th><th>Year</th><th>Limit</th></tr></thead>
+        <tbody>
+          <tr th:each="b: ${budgets}">
+            <td th:text="${b.category.name}">Food</td>
+            <td th:text="${b.month}">10</td>
+            <td th:text="${b.year}">2024</td>
+            <td th:text="${#numbers.formatDecimal(b.limitAmount,1,'COMMA',2,'POINT')}">$0.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+<div th:replace="fragments/scripts :: scripts"></div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Accounts')"></head>
+<body>
+<div class="app">
+  <aside th:replace="fragments/sidebar :: sidebar(${active})"></aside>
+  <main class="content">
+    <div class="topbar">
+      <div class="title">Accounts</div>
+      <a class="btn secondary" th:href="@{/dashboard}"><i class="ri-arrow-left-line"></i> Back</a>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="card-title">Add Account</div>
+        <form class="form" th:action="@{/accounts}" method="post">
+          <div class="form-row">
+            <input name="name" placeholder="Name" required/>
+            <select name="type">
+              <option value="CASH">Cash</option>
+              <option value="BANK">Bank</option>
+              <option value="EWALLET">E-Wallet</option>
+            </select>
+            <input name="currency" value="USD" placeholder="Currency"/>
+          </div>
+          <button class="btn" type="submit"><i class="ri-add-line"></i> Add</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-title">All Accounts</div>
+        <table class="table">
+          <thead><tr><th>Name</th><th>Type</th><th>Currency</th></tr></thead>
+          <tbody>
+            <tr th:each="a: ${accounts}">
+              <td th:text="${a.name}">Wallet</td>
+              <td th:text="${a.type}">CASH</td>
+              <td th:text="${a.currency}">USD</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+<div th:replace="fragments/scripts :: scripts"></div>
+</body>
+</html>
