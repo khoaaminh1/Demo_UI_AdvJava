@@ -49,14 +49,18 @@
           <i class="ri-pie-chart-2-line"></i>
           Spending by Category
         </div>
-        <canvas id="catChart" height="240"></canvas>
+        <div style="position: relative; height: 300px;">
+          <canvas id="catChart"></canvas>
+        </div>
       </div>
       <div class="card">
         <div class="card-title">
           <i class="ri-line-chart-line"></i>
           Cash Flow Trend (Last 6 Months)
         </div>
-        <canvas id="flowChart" height="240"></canvas>
+        <div style="position: relative; height: 300px;">
+          <canvas id="flowChart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -140,13 +144,66 @@
 </div>
 
 <script th:inline="javascript">
-  const catLabels = [[${vm.categoryLabels}]];
-  const catValues = [[${vm.categoryValues}]];
-  const months = [[${vm.months}]];
-  const incomes = [[${vm.incomes}]];
-  const expenses = [[${vm.expenses}]];
-  renderDoughnut('catChart', catLabels, catValues);
-  renderLine('flowChart', months, incomes, expenses);
+  // Wait for DOM to be fully loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get data from Thymeleaf
+    const catLabels = /*[[${vm.categoryLabels}]]*/ [];
+    const catValues = /*[[${vm.categoryValues}]]*/ [];
+    const months = /*[[${vm.months}]]*/ [];
+    const incomes = /*[[${vm.incomes}]]*/ [];
+    const expenses = /*[[${vm.expenses}]]*/ [];
+    
+    // Debug: log data to console
+    console.log('=== Dashboard Chart Data ===');
+    console.log('Category Labels:', catLabels);
+    console.log('Category Values:', catValues);
+    console.log('Months:', months);
+    console.log('Incomes:', incomes);
+    console.log('Expenses:', expenses);
+    
+    // Convert BigDecimal to numbers if needed
+    const catValuesNum = catValues.map(v => {
+      if (typeof v === 'object' && v !== null) {
+        return parseFloat(v.toString());
+      }
+      return parseFloat(v);
+    });
+    
+    const incomesNum = incomes.map(v => {
+      if (typeof v === 'object' && v !== null) {
+        return parseFloat(v.toString());
+      }
+      return parseFloat(v);
+    });
+    
+    const expensesNum = expenses.map(v => {
+      if (typeof v === 'object' && v !== null) {
+        return parseFloat(v.toString());
+      }
+      return parseFloat(v);
+    });
+    
+    console.log('Converted Values:', catValuesNum);
+    console.log('Converted Incomes:', incomesNum);
+    console.log('Converted Expenses:', expensesNum);
+    
+    // Render charts
+    if (catLabels && catLabels.length > 0 && catValuesNum && catValuesNum.length > 0) {
+      console.log('Rendering doughnut chart...');
+      renderDoughnut('catChart', catLabels, catValuesNum);
+    } else {
+      console.warn('No category data available for doughnut chart');
+    }
+    
+    if (months && months.length > 0 && incomesNum && incomesNum.length > 0) {
+      console.log('Rendering line chart...');
+      renderLine('flowChart', months, incomesNum, expensesNum);
+    } else {
+      console.warn('No cash flow data available for line chart');
+    }
+    
+    console.log('=== Chart rendering complete ===');
+  });
 </script>
 <div th:replace="fragments/scripts :: scripts"></div>
 </body>

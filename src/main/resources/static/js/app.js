@@ -13,7 +13,17 @@ Chart.defaults.borderColor = '#e2e8f0';
  */
 function renderDoughnut(canvasId, labels, data) {
   const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
+  if (!ctx) {
+    console.error('Canvas element not found:', canvasId);
+    return;
+  }
+
+  // Validate data
+  if (!labels || !data || labels.length === 0 || data.length === 0) {
+    console.warn('No data available for doughnut chart');
+    ctx.parentElement.innerHTML += '<p class="text-center text-muted" style="padding: 2rem;">No spending data available for this month</p>';
+    return;
+  }
 
   // Color palette
   const colors = [
@@ -22,69 +32,73 @@ function renderDoughnut(canvasId, labels, data) {
     '#14b8a6', '#84cc16'
   ];
 
-  new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: data,
-        backgroundColor: colors,
-        borderWidth: 0,
-        hoverOffset: 10
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            padding: 15,
-            font: {
-              size: 12
+  try {
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderWidth: 0,
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            backgroundColor: '#1e293b',
+            padding: 12,
+            titleFont: {
+              size: 14,
+              weight: '600'
             },
-            usePointStyle: true,
-            pointStyle: 'circle'
-          }
-        },
-        tooltip: {
-          backgroundColor: '#1e293b',
-          padding: 12,
-          titleFont: {
-            size: 14,
-            weight: '600'
-          },
-          bodyFont: {
-            size: 13
-          },
-          borderColor: '#334155',
-          borderWidth: 1,
-          displayColors: true,
-          callbacks: {
-            label: function(context) {
-              let label = context.label || '';
-              if (label) {
-                label += ': ';
+            bodyFont: {
+              size: 13
+            },
+            borderColor: '#334155',
+            borderWidth: 1,
+            displayColors: true,
+            callbacks: {
+              label: function(context) {
+                let label = context.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                label += '$' + context.parsed.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+                
+                // Calculate percentage
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                label += ` (${percentage}%)`;
+                
+                return label;
               }
-              label += '$' + context.parsed.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              });
-              
-              // Calculate percentage
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = ((context.parsed / total) * 100).toFixed(1);
-              label += ` (${percentage}%)`;
-              
-              return label;
             }
           }
-        }
-      },
-      cutout: '65%'
-    }
-  });
+        },
+        cutout: '65%'
+      }
+    });
+  } catch (error) {
+    console.error('Error rendering doughnut chart:', error);
+  }
 }
 
 /**
@@ -92,110 +106,124 @@ function renderDoughnut(canvasId, labels, data) {
  */
 function renderLine(canvasId, labels, incomeData, expenseData) {
   const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
+  if (!ctx) {
+    console.error('Canvas element not found:', canvasId);
+    return;
+  }
 
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Income',
-          data: incomeData,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#10b981',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2
-        },
-        {
-          label: 'Expense',
-          data: expenseData,
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#ef4444',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      interaction: {
-        mode: 'index',
-        intersect: false
+  // Validate data
+  if (!labels || !incomeData || !expenseData || labels.length === 0) {
+    console.warn('No data available for line chart');
+    ctx.parentElement.innerHTML += '<p class="text-center text-muted" style="padding: 2rem;">No cash flow data available</p>';
+    return;
+  }
+
+  try {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Income',
+            data: incomeData,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#10b981',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+          },
+          {
+            label: 'Expense',
+            data: expenseData,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#ef4444',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+          }
+        ]
       },
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            padding: 15,
-            font: {
-              size: 12
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            backgroundColor: '#1e293b',
+            padding: 12,
+            titleFont: {
+              size: 14,
+              weight: '600'
             },
-            usePointStyle: true,
-            pointStyle: 'circle'
-          }
-        },
-        tooltip: {
-          backgroundColor: '#1e293b',
-          padding: 12,
-          titleFont: {
-            size: 14,
-            weight: '600'
-          },
-          bodyFont: {
-            size: 13
-          },
-          borderColor: '#334155',
-          borderWidth: 1,
-          displayColors: true,
-          callbacks: {
-            label: function(context) {
-              let label = context.dataset.label || '';
-              if (label) {
-                label += ': $';
+            bodyFont: {
+              size: 13
+            },
+            borderColor: '#334155',
+            borderWidth: 1,
+            displayColors: true,
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': $';
+                }
+                label += context.parsed.y.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+                return label;
               }
-              label += context.parsed.y.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              });
-              return label;
             }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return '$' + value.toLocaleString('en-US');
-            }
-          },
-          grid: {
-            color: '#f1f5f9'
           }
         },
-        x: {
-          grid: {
-            display: false
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '$' + value.toLocaleString('en-US');
+              }
+            },
+            grid: {
+              color: '#f1f5f9'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
           }
         }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error('Error rendering line chart:', error);
+  }
 }
 
 /**
@@ -322,8 +350,16 @@ function updateBudgetProgress() {
   });
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize on page load - but don't interfere with chart rendering
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  // DOM already loaded
+  initializeApp();
+}
+
+function initializeApp() {
+  console.log('App initialized');
   updateBudgetProgress();
   
   // Add smooth scroll behavior
@@ -351,4 +387,4 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
-});
+}

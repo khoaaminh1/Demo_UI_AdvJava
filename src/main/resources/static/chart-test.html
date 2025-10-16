@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Test - Personal Finance Tracker</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="padding: 2rem; background: #f8fafc;">
+    <h1 style="margin-bottom: 2rem;">Chart Test Page</h1>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <div class="card">
+            <h2>Spending by Category (Doughnut Chart)</h2>
+            <canvas id="testDoughnut" height="300"></canvas>
+        </div>
+        
+        <div class="card">
+            <h2>Cash Flow Trend (Line Chart)</h2>
+            <canvas id="testLine" height="300"></canvas>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Test Data</h2>
+        <pre id="testData" style="background: #f1f5f9; padding: 1rem; border-radius: 8px; overflow-x: auto;"></pre>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Test data
+        const testCatLabels = ['Food & Drinks', 'Transport', 'Shopping', 'Entertainment'];
+        const testCatValues = [250.50, 120.75, 180.25, 95.00];
+        
+        const testMonths = ['May 24', 'Jun 24', 'Jul 24', 'Aug 24', 'Sep 24', 'Oct 24'];
+        const testIncomes = [3500, 3800, 3600, 3900, 3700, 4000];
+        const testExpenses = [2200, 2500, 2300, 2400, 2600, 2100];
+        
+        // Display test data
+        document.getElementById('testData').textContent = JSON.stringify({
+            categoryLabels: testCatLabels,
+            categoryValues: testCatValues,
+            months: testMonths,
+            incomes: testIncomes,
+            expenses: testExpenses
+        }, null, 2);
+        
+        // Render charts
+        console.log('Rendering test charts...');
+        renderDoughnut('testDoughnut', testCatLabels, testCatValues);
+        renderLine('testLine', testMonths, testIncomes, testExpenses);
+        console.log('Charts rendered successfully!');
+    </script>
+</body>
+</html>

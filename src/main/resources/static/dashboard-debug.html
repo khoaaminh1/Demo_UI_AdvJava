@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Debug - Personal Finance Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="ri-pie-chart-2-line"></i>
+            <span>Personal Finance</span>
+        </div>
+    </aside>
+    
+    <main class="content" style="margin-left: 260px;">
+        <div class="topbar">
+            <div class="title">
+                <i class="ri-dashboard-2-fill" style="color: var(--primary);"></i>
+                Dashboard Debug
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid cols-3">
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-arrow-down-circle-line" style="color: var(--success);"></i>
+                    Total Income
+                </div>
+                <div class="kpi positive">$6,778.00</div>
+                <div class="sub">Month to date</div>
+            </div>
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-arrow-up-circle-line" style="color: var(--danger);"></i>
+                    Total Expense
+                </div>
+                <div class="kpi negative">$794.00</div>
+                <div class="sub">Month to date</div>
+            </div>
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-wallet-3-line" style="color: var(--info);"></i>
+                    Net Balance
+                </div>
+                <div class="kpi positive">$5,984.00</div>
+                <div class="sub">Income - Expense</div>
+            </div>
+        </div>
+
+        <!-- Charts Section - SAME AS TEST PAGE -->
+        <div class="grid cols-2 mt-3">
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-pie-chart-2-line"></i>
+                    Spending by Category
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="catChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-line-chart-line"></i>
+                    Cash Flow Trend (Last 6 Months)
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="flowChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Info -->
+        <div class="card mt-3">
+            <div class="card-title">
+                <i class="ri-bug-line"></i>
+                Debug Information
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <h3 style="margin-bottom: 0.5rem;">Category Data:</h3>
+                    <pre id="catData" style="background: #f1f5f9; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.875rem;"></pre>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 0.5rem;">Cash Flow Data:</h3>
+                    <pre id="flowData" style="background: #f1f5f9; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.875rem;"></pre>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 8px; border-left: 3px solid #f59e0b;">
+                <strong>✅ This page uses the SAME chart code as the test page</strong>
+                <p style="margin: 0.5rem 0 0 0; color: #92400e;">If charts work here, we can copy this exact structure to the real dashboard.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+    console.log('=== Dashboard Debug Page ===');
+    console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+    console.log('renderDoughnut function:', typeof renderDoughnut);
+    console.log('renderLine function:', typeof renderLine);
+    
+    // Test data - SAME AS TEST PAGE
+    const testCatLabels = ['Food & Drinks', 'Transport', 'Shopping', 'Entertainment'];
+    const testCatValues = [250.50, 120.75, 180.25, 95.00];
+    
+    const testMonths = ['May 24', 'Jun 24', 'Jul 24', 'Aug 24', 'Sep 24', 'Oct 24'];
+    const testIncomes = [3500, 3800, 3600, 3900, 3700, 4000];
+    const testExpenses = [2200, 2500, 2300, 2400, 2600, 2100];
+    
+    // Display debug data
+    document.getElementById('catData').textContent = JSON.stringify({
+        labels: testCatLabels,
+        values: testCatValues
+    }, null, 2);
+    
+    document.getElementById('flowData').textContent = JSON.stringify({
+        months: testMonths,
+        incomes: testIncomes,
+        expenses: testExpenses
+    }, null, 2);
+    
+    // Wait for DOM
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM ready, rendering charts...');
+        
+        // Check canvas elements
+        const catCanvas = document.getElementById('catChart');
+        const flowCanvas = document.getElementById('flowChart');
+        console.log('catChart canvas:', catCanvas);
+        console.log('flowChart canvas:', flowCanvas);
+        
+        // Render charts - SAME AS TEST PAGE
+        if (catCanvas) {
+            console.log('Rendering doughnut chart...');
+            renderDoughnut('catChart', testCatLabels, testCatValues);
+        }
+        
+        if (flowCanvas) {
+            console.log('Rendering line chart...');
+            renderLine('flowChart', testMonths, testIncomes, testExpenses);
+        }
+        
+        console.log('=== Charts rendering complete ===');
+    });
+</script>
+</body>
+</html>
