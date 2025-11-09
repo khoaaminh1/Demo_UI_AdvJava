@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Register')"></head>
+<body>
+<div class="app">
+  <main class="content" style="margin-left: 0; width: 100%; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="card" style="max-width:450px; width: 100%; margin: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+
+      <!-- Registration Form -->
+      <div th:unless="${showVerifyForm}">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <i class="ri-user-add-line" style="font-size: 3rem; color: var(--primary);"></i>
+        <h2 style="margin-top: 1rem; color: var(--text-primary);">Create Account</h2>
+      </div>
+      
+      <div class="card-title">Join Personal Finance Tracker</div>
+      
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+      
+      <form th:action="@{/register}" method="post" class="form">
+        <div class="form-group">
+          <label for="fullName">Full Name</label>
+          <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required autofocus/>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Enter your email" required/>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter your password" required minlength="6"/>
+        </div>
+        <button class="btn" type="submit" style="width: 100%;">
+          <i class="ri-user-add-line"></i> Register
+        </button>
+      </form>
+      
+      <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+        <p style="color: var(--text-muted);">Already have an account? <a th:href="@{/login}" style="color: var(--primary); text-decoration: none; font-weight: 600;">Login here</a></p>
+      </div>
+      </div>
+
+      <!-- Verification Form -->
+      <div th:if="${showVerifyForm}">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <i class="ri-mail-check-line" style="font-size: 3rem; color: var(--success);"></i>
+          <h2 style="margin-top: 1rem; color: var(--text-primary);">Verify Your Account</h2>
+        </div>
+
+        <div th:if="${message}" class="alert alert-info" th:text="${message}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <p class="auth-subtitle">A 6-digit verification code has been sent to <strong th:text="${email}">your.email@example.com</strong>. Please enter it below.</p>
+
+        <form th:action="@{/verify}" method="post" class="form">
+            <input type="hidden" name="email" th:value="${email}"/>
+            <div class="form-group">
+                <label for="code">Verification Code</label>
+                <input type="text" id="code" name="code" class="form-control" placeholder="Enter 6-digit code" required autofocus maxlength="6" pattern="\d{6}" inputmode="numeric"/>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Verify Account</button>
+        </form>
+
+        <div class="auth-footer">
+            <form id="resendForm" th:action="@{/resend-code}" method="post" style="display: inline;">
+                <input type="hidden" name="email" th:value="${email}"/>
+                <p>Didn't receive the code? 
+                    <button type="submit" id="resendBtn" class="link-button">Resend Code</button>
+                </p>
+            </form>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+<style>
+.alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.alert-info { background: var(--info-light); color: var(--info); }
+.alert-danger { background: #fee; border: 1px solid #fcc; color: #c33; }
+.btn-block { width: 100%; padding: 0.75rem; font-size: 1rem; }
+.auth-subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 1.5rem; }
+.auth-footer { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
+.auth-footer p { margin: 0.5rem 0; }
+.link-button { background: none; border: none; color: var(--primary); text-decoration: underline; cursor: pointer; padding: 0; font-size: inherit; }
+.link-button:disabled { color: var(--text-muted); text-decoration: none; cursor: not-allowed; }
+</style>
+<div th:replace="fragments/scripts :: scripts"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resendForm = document.getElementById('resendForm');
+    const resendBtn = document.getElementById('resendBtn');
+
+    if (resendForm) {
+        resendForm.addEventListener('submit', function(e) {
+            // We let the form submit normally, but we start the cooldown timer
+            startCooldown();
+        });
+    }
+
+    function startCooldown() {
+        resendBtn.disabled = true;
+        let seconds = 60;
+        resendBtn.textContent = `Resend in ${seconds}s`;
+
+        const interval = setInterval(() => {
+            seconds--;
+            resendBtn.textContent = `Resend in ${seconds}s`;
+            if (seconds <= 0) {
+                clearInterval(interval);
+                resendBtn.textContent = 'Resend Code';
+                resendBtn.disabled = false;
+            }
+        }, 1000);
+    }
+});
+</script>
+
+</body>
+</html>

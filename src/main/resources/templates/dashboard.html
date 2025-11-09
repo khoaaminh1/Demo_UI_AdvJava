@@ -10,7 +10,17 @@
         <i class="ri-dashboard-2-fill" style="color: var(--primary);"></i>
         Dashboard
       </div>
-      <input class="search" placeholder="Search transactions, categories..."/>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <input class="search" placeholder="Search transactions, categories..." style="margin: 0;"/>
+        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--surface); border-radius: 8px;">
+          <i class="ri-user-line" style="color: var(--primary);"></i>
+          <span th:if="${currentUser}" th:text="${currentUser.fullName}" style="font-weight: 600; color: var(--text-primary);">User Name</span>
+          <span th:unless="${currentUser}" style="font-weight: 600; color: var(--text-primary);">Guest</span>
+        </div>
+        <a th:href="@{/logout}" class="btn secondary" style="padding: 0.5rem 1rem;">
+          <i class="ri-logout-box-line"></i> Logout
+        </a>
+      </div>
     </div>
 
     <!-- KPI Cards -->

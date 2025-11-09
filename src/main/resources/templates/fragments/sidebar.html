@@ -30,8 +30,9 @@
       </a>
     </nav>
     <div class="sidebar-footer">
-      <a href="#"><i class="ri-settings-3-line"></i> <span>Settings</span></a>
-      <a href="#"><i class="ri-logout-box-line"></i> <span>Logout</span></a>
+      <a th:href="@{/settings}" th:classappend="${active}=='settings' ? 'active' : ''">
+        <i class="ri-settings-3-line"></i> <span>Settings</span>
+      </a>
     </div>
   </aside>
 </div>

@@ -10,9 +10,26 @@
         <i class="ri-exchange-dollar-fill" style="color: var(--primary);"></i>
         Transactions
       </div>
-      <a class="btn secondary" th:href="@{/dashboard}">
-        <i class="ri-arrow-left-line"></i> Back to Dashboard
-      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--surface); border-radius: 8px;">
+          <i class="ri-user-line" style="color: var(--primary);"></i>
+          <span th:if="${currentUser}" th:text="${currentUser.fullName}" style="font-weight: 600; color: var(--text-primary);">User Name</span>
+          <span th:unless="${currentUser}" style="font-weight: 600; color: var(--text-primary);">Guest</span>
+        </div>
+        <a class="btn secondary" th:href="@{/dashboard}">
+          <i class="ri-arrow-left-line"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+    
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="alert alert-success" style="background: var(--success); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+      <i class="ri-checkbox-circle-line"></i>
+      <span th:text="${successMessage}">Success!</span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-error" style="background: var(--danger); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+      <i class="ri-error-warning-line"></i>
+      <span th:text="${errorMessage}">Error!</span>
     </div>
 
     <!-- Add New Transaction Form -->
@@ -89,22 +106,34 @@
               <th>Category</th>
               <th>Account</th>
               <th class="right">Amount</th>
+              <th style="width: 100px; text-align: center;">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr th:each="t: ${transactions}">
               <td th:text="${t.date}">2024-10-01</td>
-              <td th:text="${t.merchant}">Merchant</td>
+              <td>
+                <div th:text="${t.merchant}" style="font-weight: 600;">Merchant</div>
+                <div th:if="${t.note}" th:text="${t.note}" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Note</div>
+              </td>
               <td>
                 <span class="badge">
                   <i class="ri-price-tag-3-line"></i>
                   <span th:text="${t.category != null ? t.category.name : 'Uncategorized'}">Food</span>
                 </span>
               </td>
-              <td th:text="${t.account.name}">Wallet</td>
+              <td th:text="${t.account != null ? t.account.name : 'N/A'}">Wallet</td>
               <td class="amount" 
-                  th:classappend="${t.category.type.name()=='EXPENSE'} ? 'expense' : 'income'"
+                  th:classappend="${t.category != null and t.category.type.name()=='EXPENSE'} ? 'expense' : 'income'"
                   th:text="'$' + ${#numbers.formatDecimal(t.amount,1,'COMMA',2,'POINT')}">$0.00</td>
+              <td style="text-align: center;">
+                <form th:action="@{/transactions/{id}/delete(id=${t.id})}" method="post" style="display: inline;" 
+                      onsubmit="return confirm('Are you sure you want to delete this transaction?');">
+                  <button type="submit" class="btn-icon" style="background: var(--danger); color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer;">
+                    <i class="ri-delete-bin-line"></i>
+                  </button>
+                </form>
+              </td>
             </tr>
           </tbody>
         </table>

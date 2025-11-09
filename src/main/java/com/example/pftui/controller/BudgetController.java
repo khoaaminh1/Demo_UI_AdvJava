@@ -1,118 +1,125 @@
 package com.example.pftui.controller;
 
+import com.example.pftui.model.Budget;
+import com.example.pftui.model.CategoryType;
+import com.example.pftui.security.CustomUserDetails;
+import com.example.pftui.service.BudgetService;
+import com.example.pftui.service.CategoryService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import com.example.pftui.model.Budget;
-import com.example.pftui.service.FakeDataService;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.YearMonth;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/budgets")
 public class BudgetController {
-    private final FakeDataService data;
-    public BudgetController(FakeDataService data) { this.data = data; }
+
+    private final BudgetService budgetService;
+    private final CategoryService categoryService;
+
+    public BudgetController(BudgetService budgetService, CategoryService categoryService) {
+        this.budgetService = budgetService;
+        this.categoryService = categoryService;
+    }
 
     @GetMapping
-    public String list(@RequestParam(required = false) Integer month,
-                      @RequestParam(required = false) Integer year,
-                      @RequestParam(required = false) UUID editId,
-                      Model model) {
-        // Determine which month/year to display
-        YearMonth ym;
-        if (month != null && year != null) {
-            ym = YearMonth.of(year, month);
-        } else {
-            ym = YearMonth.now();
+    public String listBudgets(@RequestParam(required = false) Integer month,
+                              @RequestParam(required = false) Integer year,
+                              @RequestParam(required = false) String editId,
+                              Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+            return "redirect:/login";
         }
-        
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        String userId = userDetails.getUser().getId();
+
+        YearMonth ym = (month != null && year != null) ? YearMonth.of(year, month) : YearMonth.now();
+
         model.addAttribute("active", "budgets");
-        model.addAttribute("budgets", data.getBudgets());
-        model.addAttribute("categories", data.getCategories());
+        model.addAttribute("currentUser", userDetails.getUser());
         model.addAttribute("ym", ym);
         model.addAttribute("selectedMonth", ym.getMonthValue());
         model.addAttribute("selectedYear", ym.getYear());
         
-        // Build budget usages for the selected month
-        var usages = data.buildBudgetUsagesForMonth(ym);
-        model.addAttribute("usages", usages);
+        // Get budget usages for the selected month
+        model.addAttribute("budgetUsages", budgetService.getBudgetUsages(userId, ym.getMonthValue(), ym.getYear()));
+
+        // Get budgets for the selected month and year
+        model.addAttribute("budgets", budgetService.getBudgetsForUser(userId, ym.getMonthValue(), ym.getYear()));
         
-        // If editing, add the budget to edit
+        // Get only EXPENSE categories for the dropdown
+        model.addAttribute("categories", categoryService.getAllCategoriesForUser(userId).stream()
+            .filter(c -> c.getType() == CategoryType.EXPENSE).collect(Collectors.toList()));
+        
+        // If editing, fetch the budget and add it to the model
         if (editId != null) {
-            var budgetToEdit = data.getBudgets().stream()
-                .filter(b -> b.getId().equals(editId))
-                .findFirst()
-                .orElse(null);
-            model.addAttribute("editBudget", budgetToEdit);
+            budgetService.getBudgetById(editId)
+                .ifPresent(budget -> model.addAttribute("editBudget", budget));
         }
-        
+
         return "budgets";
     }
 
     @PostMapping
-    public String create(@RequestParam UUID categoryId,
-                         @RequestParam int month,
-                         @RequestParam int year,
-                         @RequestParam BigDecimal limit,
-                         @RequestParam(required = false) Boolean applyToAllMonths) {
-        var c = data.getCategories().stream()
-            .filter(cc -> cc.getId().equals(categoryId))
-            .findFirst()
-            .orElse(null);
-        
-        if (applyToAllMonths != null && applyToAllMonths) {
-            // Create budget for all 12 months
-            for (int m = 1; m <= 12; m++) {
-                data.addBudget(new Budget(UUID.randomUUID(), c, m, year, limit));
-            }
-        } else {
-            // Create budget for single month
-            data.addBudget(new Budget(UUID.randomUUID(), c, month, year, limit));
+    public String saveBudget(@RequestParam(required = false) String id,
+                           @RequestParam String categoryId,
+                           @RequestParam int month,
+                           @RequestParam int year,
+                           @RequestParam BigDecimal limitAmount,
+                           RedirectAttributes redirectAttributes) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+            return "redirect:/login";
         }
-        
-        return "redirect:/budgets?month=" + month + "&year=" + year;
-    }
-    
-    @PostMapping("/{id}/update")
-    public String update(@PathVariable UUID id,
-                        @RequestParam UUID categoryId,
-                        @RequestParam int month,
-                        @RequestParam int year,
-                        @RequestParam BigDecimal limit) {
-        var budget = data.getBudgets().stream()
-            .filter(b -> b.getId().equals(id))
-            .findFirst()
-            .orElse(null);
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        String userId = userDetails.getUser().getId();
+
+        try {
+            Budget budget = (id != null && !id.isEmpty()) 
+                ? budgetService.getBudgetById(id).orElse(new Budget()) 
+                : new Budget();
             
-        if (budget != null) {
-            var c = data.getCategories().stream()
-                .filter(cc -> cc.getId().equals(categoryId))
-                .findFirst()
-                .orElse(null);
-                
-            budget.setCategory(c);
+            budget.setUserId(userId);
+            budget.setCategoryId(categoryId);
             budget.setMonth(month);
             budget.setYear(year);
-            budget.setLimitAmount(limit);
+            budget.setLimitAmount(limitAmount);
+
+            budgetService.saveBudget(budget);
+            redirectAttributes.addFlashAttribute("successMessage", "Budget saved successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error saving budget: " + e.getMessage());
         }
-        
+
         return "redirect:/budgets?month=" + month + "&year=" + year;
     }
-    
+
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable UUID id,
-                        @RequestParam(required = false) Integer month,
-                        @RequestParam(required = false) Integer year) {
-        data.getBudgets().removeIf(b -> b.getId().equals(id));
-        
-        String redirect = "redirect:/budgets";
-        if (month != null && year != null) {
-            redirect += "?month=" + month + "&year=" + year;
+    public String deleteBudget(@PathVariable String id,
+                             @RequestParam int month,
+                             @RequestParam int year,
+                             RedirectAttributes redirectAttributes) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+            return "redirect:/login";
         }
-        return redirect;
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        String userId = userDetails.getUser().getId();
+
+        try {
+            budgetService.deleteBudget(id, userId);
+            redirectAttributes.addFlashAttribute("successMessage", "Budget deleted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting budget: " + e.getMessage());
+        }
+
+        return "redirect:/budgets?month=" + month + "&year=" + year;
     }
 }

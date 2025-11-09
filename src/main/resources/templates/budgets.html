@@ -10,22 +10,37 @@
         <i class="ri-wallet-3-fill" style="color: var(--primary);"></i>
         Budgets
       </div>
-      <div class="sub" style="font-size: 1rem; color: var(--text-secondary);">
-        <i class="ri-calendar-line"></i> 
-        Viewing: <span class="fw-semibold" th:text="${ym}">2024-10</span>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--surface); border-radius: 8px;">
+          <i class="ri-user-line" style="color: var(--primary);"></i>
+          <span th:if="${currentUser}" th:text="${currentUser.fullName}" style="font-weight: 600; color: var(--text-primary);">User Name</span>
+        </div>
+        <a class="btn secondary" th:href="@{/dashboard}">
+          <i class="ri-arrow-left-line"></i> Back to Dashboard
+        </a>
       </div>
     </div>
 
-    <!-- Set Budget Form -->
-    <div class="card">
-      <div class="card-title">
-        <i th:class="${editBudget != null ? 'ri-edit-line' : 'ri-add-circle-line'}"></i>
-        <span th:text="${editBudget != null ? 'Edit Budget' : 'Set Budget'}">Set Budget</span>
-      </div>
-      <form class="form" 
-            th:action="${editBudget != null ? '/budgets/' + editBudget.id + '/update' : '/budgets'}" 
-            method="post">
-        <div class="grid cols-4">
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="alert alert-success" style="background: var(--success); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+      <i class="ri-checkbox-circle-line"></i>
+      <span th:text="${successMessage}">Success!</span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-error" style="background: var(--danger); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+      <i class="ri-error-warning-line"></i>
+      <span th:text="${errorMessage}">Error!</span>
+    </div>
+
+    <div class="grid cols-3">
+      <!-- Add/Edit Budget Form -->
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">
+          <i th:class="${editBudget != null ? 'ri-edit-line' : 'ri-add-circle-line'}"></i>
+          <span th:text="${editBudget != null ? 'Edit Budget' : 'Set New Budget'}">Set New Budget</span>
+        </div>
+        <form class="form" th:action="@{/budgets}" method="post">
+          <input type="hidden" name="id" th:if="${editBudget != null}" th:value="${editBudget.id}"/>
+          
           <div class="form-group">
             <label for="categoryId">Category *</label>
             <select id="categoryId" name="categoryId" required>
@@ -33,67 +48,58 @@
               <option th:each="c: ${categories}" 
                       th:value="${c.id}" 
                       th:text="${c.name}"
-                      th:selected="${editBudget != null && editBudget.category.id == c.id}">Food</option>
+                      th:selected="${editBudget != null && editBudget.categoryId == c.id}">Food</option>
             </select>
           </div>
           
           <div class="form-group">
-            <label for="limit">Budget Limit *</label>
-            <input id="limit" type="number" step="0.01" name="limit" 
+            <label for="limitAmount">Budget Limit *</label>
+            <input id="limitAmount" type="number" step="0.01" name="limitAmount" 
                    placeholder="e.g., 500.00" 
                    th:value="${editBudget != null ? editBudget.limitAmount : ''}"
                    required/>
           </div>
           
-          <div class="form-group">
-            <label for="month">Month *</label>
-            <select id="month" name="month" required>
-              <option th:each="m : ${#numbers.sequence(1, 12)}" 
-                      th:value="${m}" 
-                      th:text="${T(java.time.Month).of(m).toString()}"
-                      th:selected="${editBudget != null ? editBudget.month == m : selectedMonth == m}">
-                January
-              </option>
-            </select>
+          <div class="grid cols-2">
+            <div class="form-group">
+              <label for="month">Month *</label>
+              <select id="month" name="month" required>
+                <option th:each="m : ${#numbers.sequence(1, 12)}" 
+                        th:value="${m}" 
+                        th:text="${T(java.time.Month).of(m).toString()}"
+                        th:selected="${editBudget != null ? editBudget.month == m : selectedMonth == m}">
+                  January
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="year">Year *</label>
+              <input id="year" type="number" name="year" 
+                     th:value="${editBudget != null ? editBudget.year : selectedYear}" 
+                     placeholder="2025" required/>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label for="year">Year *</label>
-            <input id="year" type="number" name="year" 
-                   th:value="${editBudget != null ? editBudget.year : selectedYear}" 
-                   placeholder="2025" required/>
+          <div class="mt-2" style="display: flex; gap: 1rem; align-items: center;">
+            <button class="btn" type="submit">
+              <i th:class="${editBudget != null ? 'ri-save-line' : 'ri-add-line'}"></i>
+              <span th:text="${editBudget != null ? 'Update Budget' : 'Save Budget'}">Save</span>
+            </button>
+            <a th:if="${editBudget != null}" 
+               th:href="@{/budgets(month=${selectedMonth}, year=${selectedYear})}" 
+               class="btn secondary">
+              <i class="ri-close-line"></i> Cancel
+            </a>
           </div>
-        </div>
-        
-        <div class="mt-2" style="display: flex; gap: 1rem; align-items: center;">
-          <button class="btn" type="submit">
-            <i th:class="${editBudget != null ? 'ri-save-line' : 'ri-add-line'}"></i>
-            <span th:text="${editBudget != null ? 'Update Budget' : 'Save Budget'}">Save Budget</span>
-          </button>
-          
-          <div th:if="${editBudget == null}" style="display: flex; align-items: center; gap: 0.5rem;">
-            <input type="checkbox" id="applyToAllMonths" name="applyToAllMonths" value="true" style="width: auto;"/>
-            <label for="applyToAllMonths" style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">
-              Apply to all 12 months
-            </label>
-          </div>
-          
-          <a th:if="${editBudget != null}" 
-             th:href="@{/budgets(month=${selectedMonth}, year=${selectedYear})}" 
-             class="btn secondary">
-            <i class="ri-close-line"></i> Cancel
-          </a>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
 
-    <div class="grid cols-2 mt-3">
-      <!-- Budget Usages with Month Filter -->
-      <div class="card">
+      <!-- Budget Usage -->
+      <div class="card" style="grid-column: span 2;">
         <div class="card-title" style="display: flex; align-items: center; justify-content: space-between;">
           <div>
             <i class="ri-funds-line"></i>
-            Budget Usage
+            Budget Usage for <span th:text="${ym.toString()}"></span>
           </div>
           <form method="get" action="/budgets" style="display: flex; gap: 0.5rem; align-items: center;">
             <select name="month" class="form-control" style="width: auto; padding: 0.4rem; font-size: 0.9rem;">
@@ -113,14 +119,13 @@
           </form>
         </div>
         
-        <div th:if="${usages != null and !usages.isEmpty()}">
-          <div th:each="u: ${usages}" style="margin-bottom:20px">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px">
-              <div class="fw-semibold" th:text="${u.categoryName}">Category</div>
-              <div class="sub">
-                <span class="fw-semibold" th:text="'$' + ${#numbers.formatDecimal(u.spent,1,'COMMA',2,'POINT')}">$0</span>
-                / 
-                <span th:text="'$' + ${#numbers.formatDecimal(u.limit,1,'COMMA',2,'POINT')}">$0</span>
+        <div th:if="${budgetUsages != null and !budgetUsages.isEmpty()}" class="budget-usage-list">
+          <div th:each="u: ${budgetUsages}" class="budget-card">
+            <div class="budget-header">
+              <div class="category-name" th:text="${u.categoryName}">Category</div>
+              <div class="amount-details">
+                <span class="spent" th:text="'$' + ${#numbers.formatDecimal(u.spent,1,'COMMA',2,'POINT')}">$0</span>
+                <span class="limit">/ <span th:text="'$' + ${#numbers.formatDecimal(u.limit,1,'COMMA',2,'POINT')}">$0</span></span>
               </div>
             </div>
             <div class="progress">
@@ -128,132 +133,42 @@
                    th:style="'width:' + ${u.percent > 100 ? 100 : u.percent} + '%'"
                    th:classappend="${u.percent >= 90} ? 'danger' : (${u.percent >= 75} ? 'warning' : '')"></div>
             </div>
-            <div style="display:flex; justify-content:space-between; margin-top:4px">
-              <span class="sub" th:text="${u.percent} + '% used'">0% used</span>
-              <span class="sub" 
+            <div class="budget-footer">
+              <span class="percent-used" th:text="${u.percent} + '% used'">0% used</span>
+              <span class="status-alert" 
                     th:if="${u.percent >= 90}" 
-                    style="color: var(--danger); font-weight: 600;">
+                    style="color: var(--danger);">
                 <i class="ri-alert-line"></i> Limit approaching!
-              </span>
-              <span class="sub" 
-                    th:if="${u.percent >= 75 and u.percent < 90}" 
-                    style="color: var(--warning); font-weight: 600;">
-                <i class="ri-error-warning-line"></i> Monitor spending
               </span>
             </div>
           </div>
         </div>
         
-        <div th:if="${usages == null or usages.isEmpty()}" 
+        <div th:if="${budgetUsages == null or budgetUsages.isEmpty()}" 
              class="text-center" style="padding: 2rem;">
           <i class="ri-wallet-3-line" style="font-size: 3rem; color: var(--text-muted);"></i>
           <p class="text-muted mt-1">No budget data for this month</p>
-          <p class="text-muted">Set a budget for <span th:text="${ym}">this month</span></p>
+          <p class="text-muted">Set a budget for <span th:text="${ym}">this month</span> using the form.</p>
         </div>
-      </div>
-
-      <!-- Quick Stats -->
-      <div class="card">
-        <div class="card-title">
-          <i class="ri-bar-chart-box-line"></i>
-          Quick Stats
-        </div>
-        <div class="stats-row">
-          <span class="stats-label">Total Budgets Set:</span>
-          <span class="stats-value" th:text="${budgets != null ? budgets.size() : 0}">0</span>
-        </div>
-        <div class="stats-row">
-          <span class="stats-label">Categories Tracked:</span>
-          <span class="stats-value" th:text="${categories != null ? categories.size() : 0}">0</span>
-        </div>
-        <div class="stats-row">
-          <span class="stats-label">This Month Budgets:</span>
-          <span class="stats-value" th:text="${usages != null ? usages.size() : 0}">0</span>
-        </div>
-        <div class="mt-3" style="padding: 1rem; background: var(--bg-body); border-radius: 8px;">
-          <div class="text-muted" style="font-size: 0.85rem; margin-bottom: 0.5rem;">
-            <i class="ri-lightbulb-line"></i> Pro Tip
-          </div>
-          <p style="font-size: 0.9rem; margin: 0; color: var(--text-secondary);">
-            Use "Apply to all 12 months" when setting annual budgets for consistent categories like Rent or Netflix.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- All Budgets Table with Actions -->
-    <div class="card mt-3">
-      <div class="card-title">
-        <i class="ri-list-check"></i>
-        All Budgets
-        <span class="badge" style="margin-left: auto;" th:if="${budgets != null}" 
-              th:text="${budgets.size()} + ' total'">0 total</span>
-      </div>
-      
-      <div th:if="${budgets != null and !budgets.isEmpty()}" 
-           style="max-height: 400px; overflow-y: auto;">
-        <table class="table">
-          <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
-            <tr>
-              <th>Category</th>
-              <th>Month</th>
-              <th>Year</th>
-              <th class="right">Limit Amount</th>
-              <th class="center" style="width: 120px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr th:each="b: ${budgets}">
-              <td>
-                <span class="badge">
-                  <i class="ri-price-tag-3-line"></i>
-                  <span th:text="${b.category.name}">Food</span>
-                </span>
-              </td>
-              <td th:text="${T(java.time.Month).of(b.month).toString()}">October</td>
-              <td th:text="${b.year}">2025</td>
-              <td class="amount fw-semibold" th:text="'$' + ${#numbers.formatDecimal(b.limitAmount,1,'COMMA',2,'POINT')}">$0.00</td>
-              <td class="center">
-                <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                  <a th:href="@{/budgets(editId=${b.id}, month=${selectedMonth}, year=${selectedYear})}" 
-                     class="btn secondary" 
-                     style="padding: 0.5rem; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;"
-                     title="Edit">
-                    <i class="ri-pencil-line"></i>
-                  </a>
-                  <form th:action="@{/budgets/{id}/delete(id=${b.id})}" method="post" style="margin: 0;">
-                    <input type="hidden" name="month" th:value="${selectedMonth}"/>
-                    <input type="hidden" name="year" th:value="${selectedYear}"/>
-                    <button type="submit" 
-                            class="btn danger" 
-                            style="padding: 0.5rem; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;"
-                            title="Delete"
-                            onclick="return confirm('Are you sure you want to delete this budget?')">
-                      <i class="ri-delete-bin-line"></i>
-                    </button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <div th:if="${budgets == null or budgets.isEmpty()}" 
-           class="text-center" style="padding: 3rem;">
-        <i class="ri-wallet-3-line" style="font-size: 4rem; color: var(--text-muted);"></i>
-        <p class="text-muted mt-1">No budgets set yet</p>
-        <p class="text-muted">Start by setting your first budget above</p>
-      </div>
-      
-      <div class="footer-note mt-2">
-        <i class="ri-lightbulb-line"></i>
-        Tip: Set realistic budgets for each category to help control your spending and achieve your financial goals.
       </div>
     </div>
 
   </main>
 </div>
+<style>
+.budget-usage-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+.budget-card { background: var(--surface); padding: 1rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.75rem; }
+.budget-header { display: flex; justify-content: space-between; align-items: baseline; }
+.category-name { font-weight: 600; font-size: 1.1rem; }
+.amount-details .spent { font-weight: 600; }
+.amount-details .limit { font-size: 0.9rem; color: var(--text-muted); }
+.progress { background: var(--bg-body); border-radius: 10px; height: 10px; overflow: hidden; }
+.progress .bar { height: 100%; background: var(--primary); border-radius: 10px; transition: width 0.3s ease; }
+.progress .bar.warning { background: var(--warning); }
+.progress .bar.danger { background: var(--danger); }
+.budget-footer { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
+.status-alert { font-weight: 600; }
+</style>
 <div th:replace="fragments/scripts :: scripts"></div>
 </body>
 </html>

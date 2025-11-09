@@ -10,132 +10,152 @@
         <i class="ri-price-tag-3-fill" style="color: var(--primary);"></i>
         Categories
       </div>
-      <a class="btn secondary" th:href="@{/dashboard}">
-        <i class="ri-arrow-left-line"></i> Back to Dashboard
-      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--surface); border-radius: 8px;">
+          <i class="ri-user-line" style="color: var(--primary);"></i>
+          <span th:if="${currentUser}" th:text="${currentUser.fullName}" style="font-weight: 600; color: var(--text-primary);">User Name</span>
+        </div>
+        <a class="btn secondary" th:href="@{/dashboard}">
+          <i class="ri-arrow-left-line"></i> Back to Dashboard
+        </a>
+      </div>
     </div>
 
-    <div class="grid cols-2">
-      <!-- Add Category Form -->
-      <div class="card">
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="alert alert-success" style="background: var(--success); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+      <i class="ri-checkbox-circle-line"></i>
+      <span th:text="${successMessage}">Success!</span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-error" style="background: var(--danger); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+      <i class="ri-error-warning-line"></i>
+      <span th:text="${errorMessage}">Error!</span>
+    </div>
+
+    <div class="grid cols-3">
+      <!-- Add/Edit Category Form -->
+      <div class="card" style="grid-column: span 1;">
         <div class="card-title">
-          <i class="ri-add-circle-line"></i>
-          Add New Category
+          <i th:class="${editCategory != null ? 'ri-edit-line' : 'ri-add-circle-line'}"></i>
+          <span th:text="${editCategory != null ? 'Edit Category' : 'Add New Category'}">Add New Category</span>
         </div>
         <form class="form" th:action="@{/categories}" method="post">
+          <input type="hidden" name="id" th:if="${editCategory != null}" th:value="${editCategory.id}"/>
+          
           <div class="form-group">
             <label for="categoryName">Category Name *</label>
-            <input id="categoryName" name="name" placeholder="e.g., Food & Dining, Salary" required/>
+            <input id="categoryName" name="name" placeholder="e.g., Food & Dining, Salary" th:value="${editCategory != null ? editCategory.name : ''}" required/>
           </div>
           
           <div class="form-group">
             <label for="categoryType">Type *</label>
             <select id="categoryType" name="type" required>
-              <option value="EXPENSE">📤 Expense</option>
-              <option value="INCOME">📥 Income</option>
+              <option value="EXPENSE" th:selected="${editCategory == null or editCategory.type.name() == 'EXPENSE'}">📤 Expense</option>
+              <option value="INCOME" th:selected="${editCategory != null and editCategory.type.name() == 'INCOME'}">📥 Income</option>
             </select>
           </div>
           
           <div class="form-group">
             <label for="icon">Icon Class (Optional)</label>
-            <input id="icon" name="icon" placeholder="e.g., ri-restaurant-2-line"/>
+            <input id="icon" name="icon" placeholder="e.g., ri-restaurant-2-line" th:value="${editCategory != null ? editCategory.icon : ''}"/>
             <small class="sub" style="margin-top: 4px; display: block;">
               Find icons at <a href="https://remixicon.com" target="_blank" style="color: var(--primary);">RemixIcon.com</a>
             </small>
           </div>
           
-          <div class="mt-2">
+          <div class="mt-2" style="display: flex; gap: 1rem; align-items: center;">
             <button class="btn" type="submit">
-              <i class="ri-save-line"></i> Add Category
+              <i th:class="${editCategory != null ? 'ri-save-line' : 'ri-add-line'}"></i>
+              <span th:text="${editCategory != null ? 'Update Category' : 'Add Category'}">Save</span>
             </button>
+            <a th:if="${editCategory != null}" th:href="@{/categories}" class="btn secondary">
+              <i class="ri-close-line"></i> Cancel
+            </a>
           </div>
         </form>
       </div>
 
       <!-- Categories List -->
-      <div class="card">
+      <div class="card" style="grid-column: span 2;">
         <div class="card-title">
           <i class="ri-list-check"></i>
           All Categories
         </div>
         
-        <div th:if="${categories != null and !categories.isEmpty()}">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Icon</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="c: ${categories}">
-                <td>
-                  <span class="fw-semibold" th:text="${c.name}">Food</span>
-                </td>
-                <td>
-                  <span class="badge" 
-                        th:style="${c.type.name() == 'EXPENSE'} ? 'background: var(--danger-light); color: var(--danger);' : 'background: var(--success-light); color: var(--success);'"
-                        th:text="${c.type}">EXPENSE</span>
-                </td>
-                <td>
-                  <i th:class="${c.icon != null and c.icon != '' ? c.icon : 'ri-price-tag-3-line'}" 
-                     style="font-size: 1.5rem; color: var(--primary);"
-                     th:title="${c.icon != null and c.icon != '' ? c.icon : 'default icon'}"></i>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div th:if="${categories == null or categories.isEmpty()}" 
-             class="text-center" style="padding: 3rem;">
-          <i class="ri-price-tag-3-line" style="font-size: 4rem; color: var(--text-muted);"></i>
-          <p class="text-muted mt-1">No categories yet</p>
-          <p class="text-muted">Add your first category using the form</p>
-        </div>
-      </div>
-    </div>
+        <div class="grid cols-2">
+          <!-- Expense Categories -->
+          <div>
+            <div class="sub-title" style="margin-bottom: 1rem;">
+              <i class="ri-arrow-up-circle-line text-danger"></i>
+              Expense Categories (<span th:text="${expenseCount}">0</span>)
+            </div>
+            <div class="category-list">
+              <div th:each="c: ${expenseCategories}" class="category-item" th:classappend="${c.isSystem()} ? 'system' : ''">
+                <div class="icon">
+                  <i th:class="${c.icon != null and !c.icon.isEmpty() ? c.icon : 'ri-price-tag-3-line'}"></i>
+                </div>
+                <div class="name" th:text="${c.name}">Category Name</div>
+                <div class="actions" th:if="${!c.isSystem()}">
+                  <a th:href="@{/categories(editId=${c.id})}" class="btn-icon" title="Edit">
+                    <i class="ri-pencil-line"></i>
+                  </a>
+                  <form th:action="@{/categories/{id}/delete(id=${c.id})}" method="post" onsubmit="return confirm('Are you sure? This cannot be undone.');">
+                    <button type="submit" class="btn-icon danger" title="Delete">
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </form>
+                </div>
+                <div class="system-tag" th:if="${c.isSystem()}">
+                  <i class="ri-shield-check-line"></i> System
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <!-- Category Statistics -->
-    <div class="grid cols-2 mt-3">
-      <div class="card">
-        <div class="card-title">
-          <i class="ri-pie-chart-2-line"></i>
-          Category Statistics
-        </div>
-        <div class="stats-row">
-          <span class="stats-label">Total Categories:</span>
-          <span class="stats-value" th:text="${categories != null ? categories.size() : 0}">0</span>
-        </div>
-        <div class="stats-row">
-          <span class="stats-label">Expense Categories:</span>
-          <span class="stats-value text-danger" th:text="${expenseCount}">0</span>
-        </div>
-        <div class="stats-row">
-          <span class="stats-label">Income Categories:</span>
-          <span class="stats-value text-success" th:text="${incomeCount}">0</span>
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="card-title">
-          <i class="ri-lightbulb-line"></i>
-          Tips & Best Practices
-        </div>
-        <div class="footer-note" style="margin: 0;">
-          <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
-            <li>Create specific categories for better tracking</li>
-            <li>Keep category names short and descriptive</li>
-            <li>Use icons to make categories easily recognizable</li>
-            <li>Review and update categories periodically</li>
-          </ul>
+          <!-- Income Categories -->
+          <div>
+            <div class="sub-title" style="margin-bottom: 1rem;">
+              <i class="ri-arrow-down-circle-line text-success"></i>
+              Income Categories (<span th:text="${incomeCount}">0</span>)
+            </div>
+            <div class="category-list">
+              <div th:each="c: ${incomeCategories}" class="category-item" th:classappend="${c.isSystem()} ? 'system' : ''">
+                <div class="icon">
+                  <i th:class="${c.icon != null and !c.icon.isEmpty() ? c.icon : 'ri-price-tag-3-line'}"></i>
+                </div>
+                <div class="name" th:text="${c.name}">Category Name</div>
+                <div class="actions" th:if="${!c.isSystem()}">
+                  <a th:href="@{/categories(editId=${c.id})}" class="btn-icon" title="Edit">
+                    <i class="ri-pencil-line"></i>
+                  </a>
+                  <form th:action="@{/categories/{id}/delete(id=${c.id})}" method="post" onsubmit="return confirm('Are you sure? This cannot be undone.');">
+                    <button type="submit" class="btn-icon danger" title="Delete">
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </form>
+                </div>
+                <div class="system-tag" th:if="${c.isSystem()}">
+                  <i class="ri-shield-check-line"></i> System
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
   </main>
 </div>
+<style>
+.category-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.category-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--surface); border-radius: 8px; }
+.category-item.system { background: var(--bg-body); }
+.category-item .icon { font-size: 1.5rem; color: var(--primary); }
+.category-item .name { font-weight: 600; flex-grow: 1; }
+.category-item .actions { display: flex; gap: 0.5rem; }
+.category-item .btn-icon { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.25rem; font-size: 1.1rem; }
+.category-item .btn-icon.danger { color: var(--danger); }
+.category-item .system-tag { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem; }
+</style>
 <div th:replace="fragments/scripts :: scripts"></div>
 </body>
 </html>

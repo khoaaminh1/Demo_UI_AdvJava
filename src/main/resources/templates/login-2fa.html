@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Two-Factor Authentication')"></head>
+<body>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="brand-logo-auth">
+            <img th:src="@{/R.jpg}" alt="Logo"/>
+            <h3>Personal Finance</h3>
+        </div>
+        <h4 class="auth-title">Two-Factor Authentication</h4>
+        <p class="auth-subtitle">A 6-digit code has been sent to your email address. Please enter it below to complete your login.</p>
+
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <form th:action="@{/login/2fa}" method="post" class="form">
+            <!-- The username (email) is passed in a hidden field to identify the user -->
+            <input type="hidden" name="email" th:value="${email}"/>
+            <div class="form-group">
+                <label for="code">Authentication Code</label>
+                <input type="text" id="code" name="code" class="form-control" placeholder="Enter 6-digit code" required autofocus maxlength="6" pattern="\d{6}" inputmode="numeric"/>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Verify</button>
+        </form>
+        <div class="auth-footer">
+            <p>Lost access to your email? <a href="#">Contact Support</a></p>
+        </div>
+    </div>
+</div>
+<style>
+.auth-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-body); }
+.auth-card { background: var(--bg-card); padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+.brand-logo-auth { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; }
+.brand-logo-auth img { width: 40px; height: 40px; border-radius: 50%; }
+.brand-logo-auth h3 { margin: 0; font-size: 1.5rem; }
+.auth-title { text-align: center; font-size: 1.5rem; margin-bottom: 0.5rem; }
+.auth-subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 1.5rem; }
+.alert-danger { background: #fee; border: 1px solid #fcc; color: #c33; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.btn-block { width: 100%; padding: 0.75rem; font-size: 1rem; }
+.auth-footer { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
+.auth-footer p { margin: 0.5rem 0; }
+</style>
+</body>
+</html>

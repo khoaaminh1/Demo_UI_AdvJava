@@ -1,109 +1,154 @@
 package com.example.pftui.controller;
 
+import com.example.pftui.model.Account;
+import com.example.pftui.model.AccountStatus;
+import com.example.pftui.model.AccountType;
+import com.example.pftui.security.CustomUserDetails;
+import com.example.pftui.service.AccountService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import com.example.pftui.model.*;
-import com.example.pftui.service.FakeDataService;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.util.UUID;
+import java.util.List;
 
 @Controller
 @RequestMapping("/accounts")
 public class AccountController {
-    private final FakeDataService data;
-    public AccountController(FakeDataService data) { this.data = data; }
+
+    private final AccountService accountService;
+
+    public AccountController(AccountService accountService) {
+        this.accountService = accountService;
+    }
 
     @GetMapping
-    public String list(@RequestParam(required = false) UUID editId, Model model) {
-        // Calculate current balances for all accounts
-        data.calculateAccountBalances();
+    public String listAccounts(@RequestParam(required = false) String editId, Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+            return "redirect:/login";
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        String userId = userDetails.getUser().getId();
+
+        List<Account> accounts = accountService.getAccountsWithBalance(userId);
         
-        var accounts = data.getAccounts();
-        
-        // Calculate statistics
-        long activeCount = accounts.stream()
-            .filter(a -> a.getStatus() == AccountStatus.ACTIVE)
-            .count();
-        long inactiveCount = accounts.stream()
-            .filter(a -> a.getStatus() == AccountStatus.INACTIVE)
-            .count();
         BigDecimal totalBalance = accounts.stream()
+            .filter(a -> a.getStatus() == AccountStatus.ACTIVE)
             .map(Account::getCurrentBalance)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
         model.addAttribute("active", "accounts");
+        model.addAttribute("currentUser", userDetails.getUser());
         model.addAttribute("accounts", accounts);
-        model.addAttribute("activeCount", activeCount);
-        model.addAttribute("inactiveCount", inactiveCount);
         model.addAttribute("totalBalance", totalBalance);
-        
-        // If editing, add the account to edit
+
         if (editId != null) {
-            var accountToEdit = accounts.stream()
-                .filter(a -> a.getId().equals(editId))
-                .findFirst()
-                .orElse(null);
-            model.addAttribute("editAccount", accountToEdit);
+            accountService.getAccountById(editId).ifPresent(account -> {
+                if (userId.equals(account.getUserId())) {
+                    model.addAttribute("editAccount", account);
+                }
+            });
         }
-        
+
         return "accounts";
     }
 
     @PostMapping
-    public String create(@RequestParam String name, 
-                        @RequestParam AccountType type, 
-                        @RequestParam(defaultValue="USD") String currency,
-                        @RequestParam(required = false) BigDecimal initialBalance) {
-        BigDecimal balance = initialBalance != null ? initialBalance : BigDecimal.ZERO;
-        data.addAccount(new Account(UUID.randomUUID(), name, type, currency, balance, AccountStatus.ACTIVE));
-        return "redirect:/accounts";
-    }
-    
-    @PostMapping("/{id}/update")
-    public String update(@PathVariable UUID id,
-                        @RequestParam String name,
-                        @RequestParam AccountType type,
-                        @RequestParam String currency,
-                        @RequestParam BigDecimal initialBalance,
-                        @RequestParam AccountStatus status) {
-        var account = data.getAccounts().stream()
-            .filter(a -> a.getId().equals(id))
-            .findFirst()
-            .orElse(null);
-            
-        if (account != null) {
+    public String saveAccount(@RequestParam(required = false) String id,
+                            @RequestParam String name,
+                            @RequestParam AccountType type,
+                            @RequestParam(defaultValue = "USD") String currency,
+                            @RequestParam(required = false) BigDecimal initialBalance,
+                            @RequestParam(required = false) AccountStatus status,
+                            RedirectAttributes redirectAttributes) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+            return "redirect:/login";
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        String userId = userDetails.getUser().getId();
+
+        try {
+            Account account = (id != null && !id.isEmpty()) 
+                ? accountService.getAccountById(id).orElse(new Account()) 
+                : new Account();
+
+            if (id != null && !id.isEmpty() && !userId.equals(account.getUserId())) {
+                throw new SecurityException("You do not have permission to edit this account.");
+            }
+
+            account.setUserId(userId);
             account.setName(name);
             account.setType(type);
             account.setCurrency(currency);
-            account.setInitialBalance(initialBalance);
-            account.setStatus(status);
+            account.setInitialBalance(initialBalance != null ? initialBalance : BigDecimal.ZERO);
+            if (status != null) { // Status might not be present in create form
+                account.setStatus(status);
+            }
+
+            accountService.createAccount(account);
+            redirectAttributes.addFlashAttribute("successMessage", "Account saved successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error saving account: " + e.getMessage());
         }
-        
+
         return "redirect:/accounts";
     }
-    
+
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable UUID id) {
-        data.getAccounts().removeIf(a -> a.getId().equals(id));
+    public String deleteAccount(@PathVariable String id, RedirectAttributes redirectAttributes) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+            return "redirect:/login";
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        String userId = userDetails.getUser().getId();
+
+        try {
+            Account account = accountService.getAccountById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+            if (!userId.equals(account.getUserId())) {
+                throw new SecurityException("You do not have permission to delete this account.");
+            }
+
+            accountService.deleteAccount(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Account deleted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting account: " + e.getMessage());
+        }
+
         return "redirect:/accounts";
     }
     
     @PostMapping("/{id}/toggle-status")
-    public String toggleStatus(@PathVariable UUID id) {
-        var account = data.getAccounts().stream()
-            .filter(a -> a.getId().equals(id))
-            .findFirst()
-            .orElse(null);
-            
-        if (account != null) {
-            account.setStatus(account.getStatus() == AccountStatus.ACTIVE 
-                ? AccountStatus.INACTIVE 
-                : AccountStatus.ACTIVE);
+    public String toggleStatus(@PathVariable String id, RedirectAttributes redirectAttributes) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+            return "redirect:/login";
         }
-        
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        String userId = userDetails.getUser().getId();
+
+        try {
+            Account account = accountService.getAccountById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+            if (!userId.equals(account.getUserId())) {
+                throw new SecurityException("You do not have permission to toggle status for this account.");
+            }
+            
+            account.setStatus(account.getStatus() == AccountStatus.ACTIVE ? AccountStatus.INACTIVE : AccountStatus.ACTIVE);
+            accountService.updateAccount(account);
+            redirectAttributes.addFlashAttribute("successMessage", "Account status updated!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+        }
+
         return "redirect:/accounts";
     }
 }
