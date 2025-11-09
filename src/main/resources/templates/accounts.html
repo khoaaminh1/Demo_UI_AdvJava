@@ -15,119 +15,195 @@
       </a>
     </div>
 
-    <div class="grid cols-2">
-      <!-- Add Account Form -->
-      <div class="card">
-        <div class="card-title">
-          <i class="ri-add-circle-line"></i>
-          Add New Account
-        </div>
-        <form class="form" th:action="@{/accounts}" method="post">
+    <!-- Add/Edit Account Form -->
+    <div class="card">
+      <div class="card-title">
+        <i th:class="${editAccount != null ? 'ri-edit-line' : 'ri-add-circle-line'}"></i>
+        <span th:text="${editAccount != null ? 'Edit Account' : 'Add New Account'}">Add New Account</span>
+      </div>
+      <form class="form" 
+            th:action="${editAccount != null ? '/accounts/' + editAccount.id + '/update' : '/accounts'}" 
+            method="post">
+        <div class="grid cols-4">
           <div class="form-group">
             <label for="accountName">Account Name *</label>
-            <input id="accountName" name="name" placeholder="e.g., Main Wallet, Bank Account" required/>
+            <input id="accountName" name="name" 
+                   placeholder="e.g., Main Wallet, Bank Account" 
+                   th:value="${editAccount != null ? editAccount.name : ''}"
+                   required/>
           </div>
           
-          <div class="form-row">
-            <div class="form-group">
-              <label for="accountType">Account Type *</label>
-              <select id="accountType" name="type" required>
-                <option value="CASH">💵 Cash</option>
-                <option value="BANK">🏦 Bank Account</option>
-                <option value="EWALLET">📱 E-Wallet</option>
-                <option value="CREDIT_CARD">💳 Credit Card</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label for="currency">Currency</label>
-              <input id="currency" name="currency" value="USD" placeholder="USD, EUR, VND" required/>
-            </div>
+          <div class="form-group">
+            <label for="accountType">Account Type *</label>
+            <select id="accountType" name="type" required>
+              <option value="CASH" th:selected="${editAccount != null && editAccount.type.name() == 'CASH'}">💵 Cash</option>
+              <option value="BANK" th:selected="${editAccount != null && editAccount.type.name() == 'BANK'}">🏦 Bank Account</option>
+              <option value="EWALLET" th:selected="${editAccount != null && editAccount.type.name() == 'EWALLET'}">📱 E-Wallet</option>
+              <option value="CREDIT_CARD" th:selected="${editAccount != null && editAccount.type.name() == 'CREDIT_CARD'}">💳 Credit Card</option>
+            </select>
           </div>
           
-          <div class="mt-2">
-            <button class="btn" type="submit">
-              <i class="ri-save-line"></i> Add Account
-            </button>
+          <div class="form-group">
+            <label for="currency">Currency *</label>
+            <input id="currency" name="currency" 
+                   th:value="${editAccount != null ? editAccount.currency : 'USD'}" 
+                   placeholder="USD, EUR, VND" required/>
           </div>
-        </form>
-      </div>
+          
+          <div class="form-group">
+            <label for="initialBalance">Initial Balance *</label>
+            <input id="initialBalance" name="initialBalance" type="number" step="0.01" 
+                   th:value="${editAccount != null ? editAccount.initialBalance : '0.00'}" 
+                   placeholder="0.00" required/>
+          </div>
+        </div>
+        
+        <div class="form-group" th:if="${editAccount != null}">
+          <label for="status">Status *</label>
+          <select id="status" name="status" required>
+            <option value="ACTIVE" th:selected="${editAccount.status.name() == 'ACTIVE'}">✓ Active</option>
+            <option value="INACTIVE" th:selected="${editAccount.status.name() == 'INACTIVE'}">✗ Inactive</option>
+          </select>
+        </div>
+        
+        <div class="mt-2" style="display: flex; gap: 1rem;">
+          <button class="btn" type="submit">
+            <i th:class="${editAccount != null ? 'ri-save-line' : 'ri-add-line'}"></i>
+            <span th:text="${editAccount != null ? 'Update Account' : 'Add Account'}">Add Account</span>
+          </button>
+          
+          <a th:if="${editAccount != null}" 
+             th:href="@{/accounts}" 
+             class="btn secondary">
+            <i class="ri-close-line"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
 
-      <!-- Accounts List -->
-      <div class="card">
-        <div class="card-title">
-          <i class="ri-list-check"></i>
-          All Accounts
-        </div>
-        
-        <div th:if="${accounts != null and !accounts.isEmpty()}">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Currency</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="a: ${accounts}">
-                <td>
-                  <span class="fw-semibold" th:text="${a.name}">Wallet</span>
-                </td>
-                <td>
-                  <span class="badge" th:text="${a.type}">CASH</span>
-                </td>
-                <td th:text="${a.currency}">USD</td>
-                <td>
-                  <span class="badge" style="background: var(--success-light); color: var(--success);">
-                    <i class="ri-checkbox-circle-line"></i> Active
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div th:if="${accounts == null or accounts.isEmpty()}" 
-             class="text-center" style="padding: 3rem;">
-          <i class="ri-bank-card-line" style="font-size: 4rem; color: var(--text-muted);"></i>
-          <p class="text-muted mt-1">No accounts yet</p>
-          <p class="text-muted">Add your first account using the form</p>
-        </div>
+    <!-- Accounts List with Current Balance -->
+    <div class="card mt-3">
+      <div class="card-title">
+        <i class="ri-list-check"></i>
+        All Accounts
+        <span class="badge" style="margin-left: auto;" th:if="${accounts != null}" 
+              th:text="${accounts.size()} + ' accounts'">0 accounts</span>
+      </div>
+      
+      <div th:if="${accounts != null and !accounts.isEmpty()}" 
+           style="max-height: 500px; overflow-y: auto;">
+        <table class="table">
+          <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Currency</th>
+              <th class="right">Initial Balance</th>
+              <th class="right">Current Balance</th>
+              <th class="center">Status</th>
+              <th class="center" style="width: 150px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="a: ${accounts}">
+              <td>
+                <span class="fw-semibold" th:text="${a.name}">Wallet</span>
+              </td>
+              <td>
+                <span class="badge" th:text="${a.type}">CASH</span>
+              </td>
+              <td th:text="${a.currency}">USD</td>
+              <td class="amount" th:text="'$' + ${#numbers.formatDecimal(a.initialBalance,1,'COMMA',2,'POINT')}">$0.00</td>
+              <td class="amount fw-semibold" 
+                  th:classappend="${a.currentBalance >= 0} ? 'income' : 'expense'"
+                  th:text="'$' + ${#numbers.formatDecimal(a.currentBalance,1,'COMMA',2,'POINT')}">$0.00</td>
+              <td class="center">
+                <span class="badge" 
+                      th:classappend="${a.status.name() == 'ACTIVE'} ? 'badge-success' : 'badge-inactive'">
+                  <i th:class="${a.status.name() == 'ACTIVE'} ? 'ri-checkbox-circle-line' : 'ri-close-circle-line'"></i>
+                  <span th:text="${a.status.name()}">ACTIVE</span>
+                </span>
+              </td>
+              <td class="center">
+                <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                  <a th:href="@{/accounts(editId=${a.id})}" 
+                     class="btn secondary" 
+                     style="padding: 0.5rem; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;"
+                     title="Edit">
+                    <i class="ri-pencil-line"></i>
+                  </a>
+                  <form th:action="@{/accounts/{id}/delete(id=${a.id})}" method="post" style="margin: 0;">
+                    <button type="submit" 
+                            class="btn danger" 
+                            style="padding: 0.5rem; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;"
+                            title="Delete"
+                            onclick="return confirm('Are you sure you want to delete this account? All associated transactions will be affected.')">
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div th:if="${accounts == null or accounts.isEmpty()}" 
+           class="text-center" style="padding: 3rem;">
+        <i class="ri-bank-card-line" style="font-size: 4rem; color: var(--text-muted);"></i>
+        <p class="text-muted mt-1">No accounts yet</p>
+        <p class="text-muted">Add your first account using the form above</p>
       </div>
     </div>
 
     <!-- Account Statistics -->
-    <div class="card mt-3">
-      <div class="card-title">
-        <i class="ri-bar-chart-box-line"></i>
-        Account Statistics
-      </div>
-      <div class="grid cols-3">
-        <div>
-          <div class="stats-row">
-            <span class="stats-label">Total Accounts:</span>
-            <span class="stats-value" th:text="${accounts != null ? accounts.size() : 0}">0</span>
-          </div>
+    <div class="grid cols-3 mt-3">
+      <div class="card">
+        <div class="card-title">
+          <i class="ri-bar-chart-box-line"></i>
+          Summary
         </div>
-        <div>
-          <div class="stats-row">
-            <span class="stats-label">Account Types:</span>
-            <span class="stats-value">Various</span>
-          </div>
+        <div class="stats-row">
+          <span class="stats-label">Total Accounts:</span>
+          <span class="stats-value" th:text="${accounts != null ? accounts.size() : 0}">0</span>
         </div>
-        <div>
-          <div class="stats-row">
-            <span class="stats-label">Status:</span>
-            <span class="stats-value text-success">All Active</span>
-          </div>
+        <div class="stats-row">
+          <span class="stats-label">Active Accounts:</span>
+          <span class="stats-value text-success" th:text="${activeCount}">0</span>
+        </div>
+        <div class="stats-row">
+          <span class="stats-label">Inactive Accounts:</span>
+          <span class="stats-value text-muted" th:text="${inactiveCount}">0</span>
         </div>
       </div>
       
-      <div class="footer-note mt-2">
-        <i class="ri-information-line"></i>
-        Tip: Keep your accounts organized by type to better track your finances across different sources.
+      <div class="card">
+        <div class="card-title">
+          <i class="ri-money-dollar-circle-line"></i>
+          Total Balance
+        </div>
+        <div style="text-align: center; padding: 2rem 0;">
+          <div class="kpi" 
+               th:classappend="${totalBalance >= 0} ? '' : 'negative'"
+               th:text="'$' + ${#numbers.formatDecimal(totalBalance,1,'COMMA',2,'POINT')}">
+            $0.00
+          </div>
+          <div class="sub mt-1">Across all accounts</div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">
+          <i class="ri-lightbulb-line"></i>
+          Tips
+        </div>
+        <div class="footer-note" style="margin: 0; display: block;">
+          <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8; font-size: 0.9rem;">
+            <li>Set accurate initial balance when creating accounts</li>
+            <li>Use "Inactive" status for old accounts instead of deleting</li>
+            <li>Monitor accounts with low or negative balance</li>
+          </ul>
+        </div>
       </div>
     </div>
 

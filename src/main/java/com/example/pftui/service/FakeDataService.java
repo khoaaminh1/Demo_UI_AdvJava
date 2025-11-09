@@ -35,9 +35,9 @@ public class FakeDataService {
         Category salary = new Category(UUID.randomUUID(), "Salary", CategoryType.INCOME, "ri-money-dollar-circle-line");
         categories.addAll(Arrays.asList(food, rent, transport, shopping, salary));
 
-        // Accounts
-        Account wallet = new Account(UUID.randomUUID(), "Wallet", AccountType.CASH, "USD");
-        Account bank = new Account(UUID.randomUUID(), "Bank", AccountType.BANK, "USD");
+        // Accounts with initial balance
+        Account wallet = new Account(UUID.randomUUID(), "Wallet", AccountType.CASH, "USD", new BigDecimal("500.00"), AccountStatus.ACTIVE);
+        Account bank = new Account(UUID.randomUUID(), "Bank", AccountType.BANK, "USD", new BigDecimal("5000.00"), AccountStatus.ACTIVE);
         accounts.addAll(Arrays.asList(wallet, bank));
 
         // Budgets (current month)
@@ -80,8 +80,38 @@ public class FakeDataService {
         transactions.add(t);
     }
     public void addCategory(Category c) { c.setId(UUID.randomUUID()); categories.add(c); }
-    public void addAccount(Account a) { a.setId(UUID.randomUUID()); accounts.add(a); }
+    public void addAccount(Account a) { 
+        a.setId(UUID.randomUUID());
+        if (a.getInitialBalance() == null) a.setInitialBalance(BigDecimal.ZERO);
+        if (a.getStatus() == null) a.setStatus(AccountStatus.ACTIVE);
+        accounts.add(a); 
+    }
     public void addBudget(Budget b) { b.setId(UUID.randomUUID()); budgets.add(b); }
+    
+    /**
+     * Calculate current balance for all accounts based on initial balance + transactions
+     */
+    public void calculateAccountBalances() {
+        for (Account account : accounts) {
+            // Start with initial balance
+            BigDecimal balance = account.getInitialBalance() != null ? account.getInitialBalance() : BigDecimal.ZERO;
+            
+            // Add income transactions and subtract expense transactions for this account
+            for (Transaction t : transactions) {
+                if (t.getAccount() != null && t.getAccount().getId().equals(account.getId())) {
+                    if (t.getCategory() != null) {
+                        if (t.getCategory().getType() == CategoryType.INCOME) {
+                            balance = balance.add(t.getAmount());
+                        } else {
+                            balance = balance.subtract(t.getAmount());
+                        }
+                    }
+                }
+            }
+            
+            account.setCurrentBalance(balance);
+        }
+    }
 
     public DashboardVM buildDashboard() {
         YearMonth ym = YearMonth.now();
@@ -140,6 +170,24 @@ public class FakeDataService {
         vm.budgetUsages = usages;
 
         return vm;
+    }
+    
+    public List<BudgetUsage> buildBudgetUsagesForMonth(YearMonth ym) {
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+        
+        List<BudgetUsage> usages = new ArrayList<>();
+        for (Budget b : budgets.stream()
+                .filter(bb -> bb.getMonth() == ym.getMonthValue() && bb.getYear() == ym.getYear())
+                .collect(Collectors.toList())) {
+            BigDecimal spent = transactions.stream()
+                .filter(t -> t.getCategory() != null && t.getCategory().getId().equals(b.getCategory().getId()))
+                .filter(t -> !t.getDate().isBefore(start) && !t.getDate().isAfter(end))
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            usages.add(new BudgetUsage(b.getCategory().getName(), spent, b.getLimitAmount()));
+        }
+        return usages;
     }
 
     private BigDecimal sumByTypeBetween(CategoryType type, LocalDate start, LocalDate end) {

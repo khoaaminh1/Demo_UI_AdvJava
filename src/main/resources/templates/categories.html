@@ -79,10 +79,9 @@
                         th:text="${c.type}">EXPENSE</span>
                 </td>
                 <td>
-                  <span class="badge">
-                    <i th:class="${c.icon != null and c.icon != ''} ? ${c.icon} : 'ri-price-tag-3-line'"></i>
-                    <span th:text="${c.icon != null and c.icon != ''} ? ${c.icon} : 'default'">Icon</span>
-                  </span>
+                  <i th:class="${c.icon != null and c.icon != '' ? c.icon : 'ri-price-tag-3-line'}" 
+                     style="font-size: 1.5rem; color: var(--primary);"
+                     th:title="${c.icon != null and c.icon != '' ? c.icon : 'default icon'}"></i>
                 </td>
               </tr>
             </tbody>
